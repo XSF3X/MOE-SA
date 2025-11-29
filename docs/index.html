@@ -854,6 +854,8 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
 // الحالة العامة
@@ -1326,6 +1328,9 @@ async function generatePPTX() {
         h: qrH
       });
     });
+<button onclick="generateTeacherPPTX()" class="pptx-btn">
+    📥 استخراج ملف PowerPoint
+</button>
 
     const fileName = state.teacherFolder + ".pptx";
     await pptx.writeFile({ fileName });
@@ -1338,6 +1343,20 @@ async function generatePPTX() {
 }
 
 // تشغيل عملية التوليد كاملة
+
+  function buildCriterionURL(teacher, criterionNumber) {
+    const base = "https://xsf3x.github.io/MOE-SA";
+    const file = `criterion-${criterionNumber}.html`;
+
+    // الرابط الظاهر للمستخدم → بدون docs
+    const publicURL = `${base}/${teacher}/${file}`;
+
+    // المسار الفعلي للرفع في GitHub → داخل docs
+    const uploadPath = `docs/${teacher}/${file}`;
+
+    return { publicURL, uploadPath };
+}
+
 async function generateAll() {
   if (!state.teacherFolder.trim()) {
     alert("الرجاء تحديد اسم مجلد المعلم.");
@@ -1389,4 +1408,5 @@ document.getElementById("btn-export-pptx")
 </script>
 </body>
 </html>
+
 
