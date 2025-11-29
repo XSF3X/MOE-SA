@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملف إنجاز المعلم - توليد QR</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  body { font-family: "Cairo", sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
+  header { background: #2c3e50; padding: 15px; color: #fff; display: flex; justify-content: space-between; }
+  .container { padding: 20px; max-width: 1250px; margin: auto; }
+  #criteria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+  .card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #dcdcdc; }
+  .card-title { font-size: 18px; font-weight: bold; color: #2c3e50; }
+  .card-count { font-size: 14px; color: #555; }
+  .btn { background: #3498db; color: white; padding: 10px 14px; border-radius: 8px; margin-top: 8px; border: none; cursor: pointer; }
+  .btn-ghost { background: #eee; color: #111; padding: 8px 12px; margin-top: 6px; border-radius: 8px; border: none; cursor: pointer; }
+  #qr-section { margin-top: 25px; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #ccc; display: none; }
+  #qr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 16px; }
+  .qr-item { text-align: center; padding: 12px; background: #fafafa; border: 1px solid #ddd; border-radius: 10px; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+</head>
+<body>
+
+<header>
+  <div>مرحباً <span id="teacher-username"></span></div>
+  <button onclick="logout()" style="background:#e74c3c;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer">تسجيل خروج</button>
+</header>
+
+<div class="container">
+
+  <h2>توليد QR وربط الصفحات</h2>
+  <p id="global-status">الرجاء اختيار صور الشواهد لكل معيار</p>
+
+  <div id="criteria-grid"></div>
+
+  <button id="btn-generate" class="btn">🔗 توليد ملف الـ PPTX</button>
+
+  <div id="qr-section">
+    <h3>الروابط و QR</h3>
+    <div id="qr-grid"></div>
+  </div>
+</div>
+
+<!-- Popup -->
+<div id="teacherPopup" style="
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
+    justify-content:center; align-items:center;">
+  <div style="background:white;padding:20px;border-radius:12px; width:300px;">
+    <h3>اسم المعلم</h3>
+    <input id="teacherNameInput" type="text" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+    <br><br>
+    <button onclick="confirmTeacherName()" class="btn">تأكيد</button>
+    <button onclick="closeTeacherPopup()" class="btn-ghost">إلغاء</button>
+  </div>
+</div>
+
+<script>
+
+
+const GITHUB_OWNER  = "XSF3X";
+const GITHUB_REPO   = "MOE-SA";
+const GITHUB_BRANCH = "main";
+
+// ⚠️ حط التوكن الحقيقي مكان XXXXX
+const GITHUB_TOKEN  = "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";
+
+
+const CRITERIA = [
+  { id: 1, title: "المعيار الأول" },
+  { id: 2, title: "المعيار الثاني" },
+  { id: 3, title: "المعيار الثالث" },
+  { id: 4, title: "المعيار الرابع" },
+  { id: 5, title: "المعيار الخامس" },
+  { id: 6, title: "المعيار السادس" },
+  { id: 7, title: "المعيار السابع" },
+  { id: 8, title: "المعيار الثامن" },
+  { id: 9, title: "المعيار التاسع" },
+  { id: 10, title: "المعيار العاشر" },
+  { id: 11, title: "المعيار الحادي عشر" },
+  { id: 12, title: "منجزات أخرى" }
+];
+
+const CRITERION_MAP = {
+  1: "criterion-1",
+  2: "criterion-2",
+  3: "criterion-3",
+  4: "criterion-4",
+  5: "criterion-5",
+  6: "criterion-6",
+  7: "criterion-7",
+  8: "criterion-8",
+  9: "criterion-9",
+  10: "criterion-10",
+  11: "criterion-11",
+  12: "other"
+};
+
+function slugify(text) {
+  return text
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w]+/g, "-")
+    .toLowerCase();
+}
+
+const state = {
+  teacherName: "",
+  criteriaFiles: {},
+  pages: {},
+  pptxBuffer: null
+};
+
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  location.href = "login.html";
+}
+
+function buildCards() {
+  const grid = document.getElementById("criteria-grid");
+
+  CRITERIA.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="card-title">${c.title}</div>
+      <div class="card-count" id="count-${c.id}">0 صورة</div>
+      <button class="btn-ghost" onclick="document.getElementById('file-${c.id}').click()">اختيار صور</button>
+      <input type="file" id="file-${c.id}" multiple accept="image/*" style="display:none">
+    `;
+
+    grid.appendChild(card);
+
+    document.getElementById(`file-${c.id}`).addEventListener("change", e => {
+      const files = Array.from(e.target.files);
+      state.criteriaFiles[c.id] = files;
+      document.getElementById(`count-${c.id}`).textContent = `${files.length} صورة`;
+    });
+  });
+}
+
+function readAsDataURL(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.readAsDataURL(file);
+  });
+}
+
+async function githubUpload(path, content) {
+  // رابط API
+  const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`;
+
+  // نحول HTML إلى Base64 بشكل آمن لـ UTF-8
+  const base64 = btoa(unescape(encodeURIComponent(content)));
+
+  // نتحقق هل الملف موجود مسبقاً للحصول على الـ SHA
+  let sha = undefined;
+  const checkRes = await fetch(apiUrl, {
+    headers: {
+      "Accept": "application/vnd.github+json",
+      "Authorization": `Bearer ${GITHUB_TOKEN}`
+    }
+  });
+
+  if (checkRes.status === 200) {
+    const info = await checkRes.json();
+    sha = info.sha; // مطلوب لو بنعدل على نفس الملف
+  }
+
+  // نحضّر الـ payload
+  const payload = {
+    message: `Upload ${path}`,
+    content: base64,
+    branch: GITHUB_BRANCH,
+    ...(sha && { sha })
+  };
+
+  // نرفع الملف مباشرة إلى GitHub
+  const uploadRes = await fetch(apiUrl, {
+    method: "PUT",
+    headers: {
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GITHUB_TOKEN}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await uploadRes.json();
+
+  if (!uploadRes.ok) {
+    console.error("GitHub upload error:", uploadRes.status, result);
+    throw new Error("Upload failed: " + uploadRes.status);
+  }
+
+  return result;
+}
+
+
+    const fullUrl = `https://xsf3x.github.io/MOE-SA/${path}`;
+    const qrData = await generateQR(fullUrl);
+
+    state.pages[id] = { url: fullUrl, qr: qrData };
+
+    const d = document.createElement("div");
+    d.className = "qr-item";
+    d.innerHTML = `<div>${crit.title}</div><img src="${qrData}" width="150"><div>${fullUrl}</div>`;
+    document.getElementById("qr-grid").appendChild(d);
+  }
+
+  document.getElementById("qr-section").style.display = "block";
+}
+
+function generateQR(url) {
+  return new Promise(resolve => {
+    const div = document.createElement("div");
+    new QRCode(div, { text: url, width: 200, height: 200 });
+
+    setTimeout(() => {
+      const canvas = div.querySelector("canvas");
+      resolve(canvas.toDataURL("image/png"));
+    }, 300);
+  });
+}
+
+function openTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "flex";
+}
+
+function closeTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "none";
+}
+
+function confirmTeacherName() {
+  state.teacherName = document.getElementById("teacherNameInput").value.trim();
+  if (!state.teacherName) return;
+  closeTeacherPopup();
+  generate();
+}
+
+document.getElementById("btn-generate").onclick = openTeacherPopup;
+
+buildCards();
+
+</script>
+</body>
+</html>
