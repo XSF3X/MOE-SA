@@ -838,7 +838,6 @@
         return;
     }
 
-    // اطلب اسم المعلم بالعربي – إجباري
     let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
     if (!teacherArabic || teacherArabic.trim() === "") {
         alert("يجب إدخال الاسم قبل متابعة التصدير.");
@@ -850,11 +849,11 @@
         setPptxLoading(true);
 
         const resp = await fetch("template.pptx");
-        if (!resp.ok) {
-            throw new Error("تعذر تحميل template.pptx من نفس المجلد.");
-        }
         const buf = await resp.arrayBuffer();
         const zip = await JSZip.loadAsync(buf);
+
+        // 🔥 استبدال placeholder ∑ بجميع الشرائح
+        await replacePlaceholderInAllSlides(zip, "∑", teacherArabic);
 
         const startSlide = 8;
         const qrCount = state.qrImages.length;
@@ -864,12 +863,8 @@
             const slidePath = `ppt/slides/slide${slideNum}.xml`;
             const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
 
-            if (!zip.file(slidePath)) {
-                console.warn("Slide not found:", slidePath);
-                continue;
-            }
+            if (!zip.file(slidePath)) continue;
 
-            // إدراج QR في الشريحة
             const dataUrl = state.qrImages[i];
             const base64 = dataUrl.split(",")[1];
             const imgName = `qr_${i+1}.png`;
@@ -877,8 +872,7 @@
 
             let relsXml = zip.file(relsPath)
                 ? await zip.file(relsPath).async("string")
-                : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+                : `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
 
             const relId = `rId_qr_${i+1}`;
 
@@ -888,14 +882,12 @@
                     `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
                 );
             }
+
             zip.file(relsPath, relsXml);
 
             let slideXml = await zip.file(slidePath).async("string");
 
-            // استبدال ∑ بالاسم العربي
-            slideXml = slideXml.replace(/∑/g, teacherArabic);
-
-            // إضافة QR في نهاية spTree
+            // QR داخل الشريحة
             const picXml = `
 <p:pic xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
@@ -922,20 +914,17 @@
             zip.file(slidePath, slideXml);
         }
 
-        const outBlob = await zip.generateAsync({ type: "blob" });
-        const teacherName = (loggedInUser || "teacher").replace(/\s+/g, "-");
-        const fileName = `ملف-انجاز-${teacherName}.pptx`;
-        saveAs(outBlob, fileName);
-
-        alert("تم إنشاء ملف PowerPoint مع استبدال الرمز ∑ بنجاح ✓");
+        const blob = await zip.generateAsync({ type: "blob" });
+        saveAs(blob, `ملف-إنجاز-${teacherArabic}.pptx`);
+        alert("تم دمج اسم المعلم داخل ملف البوربوينت بنجاح ✓");
 
     } catch (err) {
-        console.error(err);
-        alert("حدث خطأ أثناء إنشاء ملف البوربوينت: " + err.message);
+        alert("خطأ أثناء توليد البوربوينت: " + err.message);
     } finally {
         setPptxLoading(false);
     }
 }
+
 
   // تهيئة الصفحة بعد التحميل
   function initPage() {
@@ -972,4 +961,5 @@
 </script>
 </body>
 </html>
+
 
