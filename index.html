@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملف إنجاز المعلم - توليد QR</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: "Cairo", sans-serif;
+    background: #f5f6fa;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #2c3e50;
+    padding: 15px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+  }
+  .container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+  }
+  #criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid #dcdcdc;
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .card-count {
+    font-size: 14px;
+    color: #555;
+  }
+  .btn {
+    background: #3498db;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-ghost {
+    background: #eee;
+    color: #111;
+    padding: 8px 12px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  #qr-section {
+    margin-top: 25px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    display: none;
+  }
+  #qr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .qr-item {
+    text-align: center;
+    padding: 12px;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+  }
+  .card-status {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
+  }
+  .badge-ok {
+    color: green;
+    font-weight: bold;
+  }
+  .badge-warn {
+    color: #c0392b;
+    font-weight: bold;
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+</head>
+<body>
+
+<header>
+  <div>مرحباً <span id="teacher-username"></span></div>
+  <button onclick="logout()" style="background:#e74c3c;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer">تسجيل خروج</button>
+</header>
+
+<div class="container">
+
+  <h2>توليد QR وربط الصفحات</h2>
+  <p id="global-status">الرجاء اختيار صور الشواهد لكل معيار</p>
+
+  <div id="criteria-grid"></div>
+
+  <button id="btn-generate" class="btn">🔗 توليد ملف الـ PPTX</button>
+
+  <div id="qr-section">
+    <h3>الروابط و QR</h3>
+    <div id="qr-grid"></div>
+  </div>
+</div>
+
+<!-- Popup -->
+<div id="teacherPopup" style="
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
+    justify-content:center; align-items:center;">
+  <div style="background:white;padding:20px;border-radius:12px; width:300px;">
+    <h3>اسم المعلم</h3>
+    <input id="teacherNameInput" type="text" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+    <br><br>
+    <button onclick="confirmTeacherName()" class="btn">تأكيد</button>
+    <button onclick="closeTeacherPopup()" class="btn-ghost">إلغاء</button>
+  </div>
+</div>
+
+<script>
+/* إعدادات GitHub */
+const GITHUB_OWNER  = "XSF3X";  
+const GITHUB_REPO   = "MOE-SA";  
+const GITHUB_BRANCH = "main";  
+const GITHUB_TOKEN  = "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";  // استبدله بالتوكن الحقيقي
+
+const GITHUB_PAGES_BASE = "https://XSF3X.github.io/MOE-SA/";
+
+/* قالب PPTX */
+const PPTX_TEMPLATE_URL = "template.pptx";
+
+/* قائمة المعايير */
+const CRITERIA = [
+  { id: 1, title: "المعيار الأول", subtitle: "أداء الواجبات الوظيفية" },
+  { id: 2, title: "المعيار الثاني", subtitle: "التفاعل مع المجتمع المهني" },
+  { id: 3, title: "المعيار الثالث", subtitle: "التفاعل مع أولياء الأمور" },
+  { id: 4, title: "المعيار الرابع", subtitle: "إستراتيجيات التدريس" },
+  { id: 5, title: "المعيار الخامس", subtitle: "تحسين نتائج المتعلمين" },
+  { id: 6, title: "المعيار السادس", subtitle: "خطة التعلم" },
+  { id: 7, title: "المعيار السابع", subtitle: "التقنيات التعليمية" },
+  { id: 8, title: "المعيار الثامن", subtitle: "تهيئة البيئة التعليمية" },
+  { id: 9, title: "المعيار التاسع", subtitle: "الإدارة الصفية" },
+  { id: 10, title: "المعيار العاشر", subtitle: "تحليل النتائج" },
+  { id: 11, title: "المعيار الحادي عشر", subtitle: "أساليب التقويم" },
+  { id: 12, title: "منجزات أخرى", subtitle: "منجزات عامة" }
+];
+
+const state = {
+  criteriaFiles: {},
+  pages: {},
+  teacherName: "",
+  pptxBuffer: null
+};
+
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  location.href = "login.html";
+}
+
+/* بناء واجهة المعايير */
+function buildCards() {
+  const grid = document.getElementById("criteria-grid");
+
+  CRITERIA.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="card-title">${c.title}</div>
+      <div class="card-count" id="count-${c.id}">0 صورة</div>
+      <div class="card-status" id="status-${c.id}"></div>
+      <button class="btn-ghost" onclick="document.getElementById('file-${c.id}').click()">اختيار صور</button>
+      <input type="file" id="file-${c.id}" multiple accept="image/*" style="display:none">
+    `;
+
+    grid.appendChild(card);
+
+    document.getElementById(`file-${c.id}`).addEventListener("change", e => {
+      const files = Array.from(e.target.files);
+      state.criteriaFiles[c.id] = files;
+      document.getElementById(`count-${c.id}`).textContent = `${files.length} صورة`;
+      document.getElementById(`status-${c.id}`).textContent = "جاهز للرفع";
+    });
+  });
+}
+
+/* قراءة ملف */
+function readAsDataURL(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.readAsDataURL(file);
+  });
+}
+
+/* رفع ملف HTML إلى GitHub */
+async function githubUpload(path, content) {
+  const api = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+
+  const body = {
+    message: "upload criterion page",
+    content: b64,
+    branch: GITHUB_BRANCH
+  };
+
+  const res = await fetch(api, {
+    method: "PUT",
+    headers: {
+      "Authorization": `Bearer ${GITHUB_TOKEN}`,
+      "Accept": "application/vnd.github+json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) throw new Error(await res.text());
+}
+
+/* توليد QR */
+function generateQR(url) {
+  return new Promise(resolve => {
+    const div = document.createElement("div");
+    const qr = new QRCode(div, { text: url, width: 200, height: 200 });
+
+    setTimeout(() => {
+      const canvas = div.querySelector("canvas");
+      resolve(canvas.toDataURL("image/png"));
+    }, 400);
+  });
+}
+
+/* تحميل القالب */
+async function loadTemplate() {
+  const res = await fetch(PPTX_TEMPLATE_URL);
+  state.pptxBuffer = await res.arrayBuffer();
+}
+
+/* بناء صفحة HTML للمعيار */
+function buildPageHTML(teacher, crit, imgs) {
+  return `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>${crit.title}</title>
+</head>
+<body>
+<h1>${crit.title}</h1>
+<h3>${crit.subtitle}</h3>
+<p>المعلم: ${teacher}</p>
+${imgs.map((i, n) => `<h4>الصورة ${n+1}</h4><img src="${i}" width="100%">`).join("")}
+</body>
+</html>`;
+}
+
+/* تعديل PPTX */
+async function buildPPTX() {
+  const zip = await JSZip.loadAsync(state.pptxBuffer);
+
+  const slide1 = "ppt/slides/slide1.xml";
+  let xml = await zip.file(slide1).async("string");
+  xml = xml.replace(/∑/g, state.teacherName);
+  zip.file(slide1, xml);
+
+  let id = 1;
+  for (const cid in state.pages) {
+    zip.file(`ppt/media/qr${cid}.png`, state.pages[cid].bin, { binary: true });
+  }
+
+  return zip.generateAsync({ type: "blob" });
+}
+
+/* توليد */
+async function generate() {
+  if (!state.teacherName) return alert("أدخل اسم المعلم");
+
+  const active = Object.keys(state.criteriaFiles);
+
+  for (const id of active) {
+    const crit = CRITERIA.find(c => c.id == id);
+    const files = state.criteriaFiles[id];
+
+    const urls = [];
+    for (const f of files) urls.push(await readAsDataURL(f));
+
+    const html = buildPageHTML(state.teacherName, crit, urls);
+
+    const path = `pages/${state.teacherName.replace(/ /g,"_")}/criterion-${id}.html`;
+
+    await githubUpload(path, html);
+
+    const fullUrl = `${GITHUB_PAGES_BASE}pages/${state.teacherName.replace(/ /g,"_")}/criterion-${id}.html`;
+
+    const qr = await generateQR(fullUrl);
+    const bin = Uint8Array.from(atob(qr.split(",")[1]), c => c.charCodeAt(0));
+
+    state.pages[id] = { url: fullUrl, qr, bin };
+
+    document.getElementById("qr-section").style.display = "block";
+    const d = document.createElement("div");
+    d.className = "qr-item";
+    d.innerHTML = `<div>${crit.title}</div><img src="${qr}" width="150"><div>${fullUrl}</div>`;
+    document.getElementById("qr-grid").appendChild(d);
+  }
+
+  const blob = await buildPPTX();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ملف-انجاز-المعلم.pptx";
+  a.click();
+}
+
+/* popup */
+function openTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "flex";
+}
+function closeTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "none";
+}
+function confirmTeacherName() {
+  state.teacherName = document.getElementById("teacherNameInput").value.trim();
+  if (!state.teacherName) return;
+  closeTeacherPopup();
+  generate();
+}
+
+document.getElementById("btn-generate").onclick = openTeacherPopup;
+
+/* تشغيل */
+buildCards();
+loadTemplate();
+</script>
+
+</body>
+</html>
