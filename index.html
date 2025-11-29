@@ -1,119 +1,365 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ملف إنجاز المعلم - توليد QR</title>
+    <meta charset="UTF-8">
+    <title>ملف إنجاز المعلم - توليد QR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- الخط -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- مكتبات خارجية -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-<style>
-  body { font-family: "Cairo", sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
-  header { background: #2c3e50; padding: 15px; color: #fff; display: flex; justify-content: space-between; }
-  .container { padding: 20px; max-width: 1250px; margin: auto; }
-  #criteria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
-  .card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #dcdcdc; }
-  .card-title { font-size: 18px; font-weight: bold; color: #2c3e50; }
-  .card-count { font-size: 14px; color: #555; }
-  .btn { background: #3498db; color: white; padding: 10px 14px; border-radius: 8px; margin-top: 8px; border: none; cursor: pointer; }
-  .btn-ghost { background: #eee; color: #111; padding: 8px 12px; margin-top: 6px; border-radius: 8px; border: none; cursor: pointer; }
-  #qr-section { margin-top: 25px; padding: 15px; background: #fff; border-radius: 12px; border: 1px solid #ccc; display: none; }
-  #qr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 16px; }
-  .qr-item { text-align: center; padding: 12px; background: #fafafa; border: 1px solid #ddd; border-radius: 10px; }
-</style>
+        body {
+            margin: 0;
+            font-family: "Cairo", Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 35%, #0f172a 100%);
+            color: #0f172a;
+            min-height: 100vh;
+            direction: rtl;
+        }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        header {
+            background: rgba(15, 23, 42, 0.92);
+            color: #e5e7eb;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+        }
 
+        header .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        header .logo span {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            background: radial-gradient(circle at 30% 30%, #38bdf8, #0ea5e9 40%, #0369a1 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        header .logout-btn {
+            background: transparent;
+            border-radius: 999px;
+            border: 1px solid rgba(248, 113, 113, 0.5);
+            color: #fecaca;
+            padding: 6px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        header .logout-btn:hover {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.9);
+        }
+
+        main {
+            padding: 26px 18px 36px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .page-card {
+            background: rgba(15, 23, 42, 0.96);
+            border-radius: 18px;
+            padding: 22px 20px 24px;
+            box-shadow:
+                0 18px 40px rgba(15, 23, 42, 0.65),
+                0 0 0 1px rgba(148, 163, 184, 0.3);
+            color: #e5e7eb;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .criteria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            background: radial-gradient(circle at top, #1f2937 0%, #020617 55%);
+            border-radius: 14px;
+            padding: 16px 14px 14px;
+            border: 1px solid rgba(148, 163, 184, 0.55);
+            box-shadow:
+                0 12px 24px rgba(15, 23, 42, 0.6),
+                inset 0 0 0 1px rgba(15, 23, 42, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 120px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card-count {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            color: #0f172a;
+            box-shadow: 0 10px 22px rgba(56, 189, 248, 0.4);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(56, 189, 248, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.85);
+            color: #e5e7eb;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .actions-row {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .actions-row button {
+            min-width: 200px;
+        }
+
+        .qr-section {
+            margin-top: 26px;
+            background: radial-gradient(circle at top, #020617 0%, #020617 40%, #020617 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            padding: 18px 14px 16px;
+            display: none;
+        }
+
+        .qr-section h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .qr-item {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            border: 1px solid rgba(55, 65, 81, 0.8);
+        }
+
+        .qr-item img {
+            margin-top: 6px;
+        }
+
+        /* نافذة اسم المعلم */
+        .popup-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+        }
+
+        .popup {
+            background: #020617;
+            border-radius: 14px;
+            padding: 18px 18px 16px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+            width: 320px;
+            max-width: 90vw;
+            color: #e5e7eb;
+            box-shadow:
+                0 18px 40px rgba(15, 23, 42, 0.9),
+                0 0 0 1px rgba(15, 23, 42, 0.9);
+        }
+
+        .popup h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+        }
+
+        .popup label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .popup input {
+            width: 100%;
+            padding: 8px 9px;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.9);
+            background: #020617;
+            color: #e5e7eb;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .popup-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding: 18px 10px 26px;
+            }
+
+            .page-card {
+                padding: 18px 14px 20px;
+            }
+
+            .criteria-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding-inline: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
 
 <header>
-  <div>مرحباً <span id="teacher-username"></span></div>
-  <button onclick="logout()" style="background:#e74c3c;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer">تسجيل خروج</button>
+    <div class="logo">
+        <span>م</span>
+        <div>ملف إنجاز المعلم</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">تسجيل خروج</button>
 </header>
 
-<div class="container">
+<main>
+    <div class="page-card">
+        <div class="page-header">
+            <div class="page-title">توليد وربط QR للصفحات</div>
+            <div class="page-subtitle">الرجاء اختيار صور الشواهد لكل معيار</div>
+        </div>
 
-  <h2>توليد QR وربط الصفحات</h2>
-  <p id="global-status">الرجاء اختيار صور الشواهد لكل معيار</p>
+        <div id="criteria-grid" class="criteria-grid">
+            <!-- البطاقات تُبنى بالـ JS -->
+        </div>
 
-  <div id="criteria-grid"></div>
+        <div class="actions-row">
+            <button id="btn-generate" class="btn btn-primary">
+                🧩 توليد ملفات HTML و QR
+            </button>
+        </div>
 
-  <button id="btn-generate" class="btn">🔗 توليد ملف الـ PPTX</button>
+        <div id="qr-section" class="qr-section">
+            <h3>روابط وصفحات المعايير (QR)</h3>
+            <div id="qr-grid" class="qr-grid"></div>
+        </div>
+    </div>
+</main>
 
-  <div id="qr-section">
-    <h3>الروابط و QR</h3>
-    <div id="qr-grid"></div>
-  </div>
-</div>
-
-<!-- Popup -->
-<div id="teacherPopup" style="
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
-    justify-content:center; align-items:center;">
-  <div style="background:white;padding:20px;border-radius:12px; width:300px;">
-    <h3>اسم المعلم</h3>
-    <input id="teacherNameInput" type="text" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
-    <br><br>
-    <button onclick="confirmTeacherName()" class="btn">تأكيد</button>
-    <button onclick="closeTeacherPopup()" class="btn-ghost">إلغاء</button>
-  </div>
+<!-- نافذة إدخال اسم المعلم -->
+<div id="teacherPopup" class="popup-backdrop">
+    <div class="popup">
+        <h3>اسم المعلم</h3>
+        <label for="teacherNameInput">اكتب اسم المعلم كما تريد ظهوره في الصفحات:</label>
+        <input id="teacherNameInput" type="text" placeholder="مثال: أ. سعود الشريف">
+        <div class="popup-actions">
+            <button class="btn btn-secondary" onclick="closeTeacherPopup()">إلغاء</button>
+            <button class="btn btn-primary" onclick="confirmTeacherName()">تأكيد</button>
+        </div>
+    </div>
 </div>
 
 <script>
-
-
-const GITHUB_OWNER  = "XSF3X";
-const GITHUB_REPO   = "MOE-SA";
-const GITHUB_BRANCH = "main";
-
-
+const GITHUB_PAGES_BASE = "https://xsf3x.github.io/MOE-SA/";
 
 const CRITERIA = [
-  { id: 1, title: "المعيار الأول" },
-  { id: 2, title: "المعيار الثاني" },
-  { id: 3, title: "المعيار الثالث" },
-  { id: 4, title: "المعيار الرابع" },
-  { id: 5, title: "المعيار الخامس" },
-  { id: 6, title: "المعيار السادس" },
-  { id: 7, title: "المعيار السابع" },
-  { id: 8, title: "المعيار الثامن" },
-  { id: 9, title: "المعيار التاسع" },
+  { id: 1,  title: "المعيار الأول" },
+  { id: 2,  title: "المعيار الثاني" },
+  { id: 3,  title: "المعيار الثالث" },
+  { id: 4,  title: "المعيار الرابع" },
+  { id: 5,  title: "المعيار الخامس" },
+  { id: 6,  title: "المعيار السادس" },
+  { id: 7,  title: "المعيار السابع" },
+  { id: 8,  title: "المعيار الثامن" },
+  { id: 9,  title: "المعيار التاسع" },
   { id: 10, title: "المعيار العاشر" },
   { id: 11, title: "المعيار الحادي عشر" },
   { id: 12, title: "منجزات أخرى" }
 ];
 
-const CRITERION_MAP = {
-  1: "criterion-1",
-  2: "criterion-2",
-  3: "criterion-3",
-  4: "criterion-4",
-  5: "criterion-5",
-  6: "criterion-6",
-  7: "criterion-7",
-  8: "criterion-8",
-  9: "criterion-9",
-  10: "criterion-10",
-  11: "criterion-11",
-  12: "other"
-};
-
-function slugify(text) {
-  return text
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w]+/g, "-")
-    .toLowerCase();
-}
-
 const state = {
   teacherName: "",
-  criteriaFiles: {},
-  pages: {},
-  pptxBuffer: null
+  criteriaFiles: {},   // id -> File[]
+  pages: {},           // id -> { url, qr }
 };
 
 function logout() {
@@ -131,8 +377,10 @@ function buildCards() {
     card.innerHTML = `
       <div class="card-title">${c.title}</div>
       <div class="card-count" id="count-${c.id}">0 صورة</div>
-      <button class="btn-ghost" onclick="document.getElementById('file-${c.id}').click()">اختيار صور</button>
-      <input type="file" id="file-${c.id}" multiple accept="image/*" style="display:none">
+      <label class="btn btn-secondary">
+        اختر صور
+        <input id="file-${c.id}" type="file" accept="image/*" multiple style="display:none" />
+      </label>
     `;
 
     grid.appendChild(card);
@@ -146,50 +394,34 @@ function buildCards() {
 }
 
 function readAsDataURL(file) {
-  return new Promise(res => {
+  return new Promise(resolve => {
     const r = new FileReader();
-    r.onload = () => res(r.result);
+    r.onload = () => resolve(r.result);
     r.readAsDataURL(file);
   });
 }
 
+// =======================
+//  Cloudflare Worker API
+// =======================
 async function githubUpload(path, content) {
   const res = await fetch("https://moe-uploader.snh-saud.workers.dev/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path, content })
   });
 
-  // مهم جدًا
-  const txt = await res.text();
+  const data = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    console.error("Worker error:", txt);
-    throw new Error("Upload failed");
+  if (!res.ok || (data.status && data.status >= 300)) {
+    console.error("Worker upload error:", res.status, data);
+    throw new Error(data.error || (data.github && data.github.message) || "Upload failed");
   }
 
-  return txt; // حتى نعرف الرد
+  return data;
 }
 
-
-
-
-    const fullUrl = `https://xsf3x.github.io/MOE-SA/${path}`;
-    const qrData = await generateQR(fullUrl);
-
-    state.pages[id] = { url: fullUrl, qr: qrData };
-
-    const d = document.createElement("div");
-    d.className = "qr-item";
-    d.innerHTML = `<div>${crit.title}</div><img src="${qrData}" width="150"><div>${fullUrl}</div>`;
-    document.getElementById("qr-grid").appendChild(d);
-  }
-
-  document.getElementById("qr-section").style.display = "block";
-}
-
+// توليد QR لصورة base64
 function generateQR(url) {
   return new Promise(resolve => {
     const div = document.createElement("div");
@@ -202,8 +434,82 @@ function generateQR(url) {
   });
 }
 
+// HTML جاهز لكل معيار
+function buildCriterionHTML(teacherSafe, critTitle, imagesData) {
+  const imagesHtml = imagesData.map((src, i) =>
+    `<div style="margin:10px auto; max-width:900px;">
+       <img src="${src}" alt="صورة ${i + 1}" style="max-width:100%; border-radius:8px; box-shadow:0 0 4px rgba(0,0,0,0.2); margin:6px 0;">
+     </div>`
+  ).join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>${critTitle} - ${teacherSafe}</title>
+  <style>
+    body { font-family: 'Cairo', Tahoma, Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px; text-align:center; direction:rtl; }
+    h1 { margin-bottom:4px; }
+    h2 { margin-top:0; color:#555; font-size:16px; }
+  </style>
+</head>
+<body>
+  <h1>${critTitle}</h1>
+  <h2>${teacherSafe}</h2>
+  ${imagesHtml}
+</body>
+</html>`;
+}
+
+// الدالة الرئيسية
+async function generate() {
+  const qrGrid = document.getElementById("qr-grid");
+  qrGrid.innerHTML = "";
+  state.pages = {};
+
+  const name = state.teacherName.trim();
+  if (!name) {
+    alert("يرجى كتابة اسم المعلم أولاً");
+    return;
+  }
+
+  const teacherSafe = encodeURIComponent(name);
+
+  for (const crit of CRITERIA) {
+    const files = state.criteriaFiles[crit.id] || [];
+    if (!files.length) continue;
+
+    // نحول كل الصور إلى base64
+    const dataUrls = [];
+    for (const f of files) {
+      const dataUrl = await readAsDataURL(f);
+      dataUrls.push(dataUrl);
+    }
+
+    const path = `pages/${teacherSafe}/criterion-${crit.id}.html`;
+    const htmlContent = buildCriterionHTML(name, crit.title, dataUrls);
+
+    // رفع صفحة HTML عن طريق الـ Worker
+    await githubUpload(path, htmlContent);
+
+    const fullUrl = GITHUB_PAGES_BASE + path;
+    const qrData = await generateQR(fullUrl);
+
+    state.pages[crit.id] = { url: fullUrl, qr: qrData };
+
+    const d = document.createElement("div");
+    d.className = "qr-item";
+    d.innerHTML = `<div>${crit.title}</div><img src="${qrData}" width="150"><div style="font-size:11px;word-break:break-all;">${fullUrl}</div>`;
+    qrGrid.appendChild(d);
+  }
+
+  document.getElementById("qr-section").style.display = "block";
+}
+
+// ===== نافذة اسم المعلم =====
 function openTeacherPopup() {
   document.getElementById("teacherPopup").style.display = "flex";
+  document.getElementById("teacherNameInput").focus();
 }
 
 function closeTeacherPopup() {
@@ -219,8 +525,9 @@ function confirmTeacherName() {
 
 document.getElementById("btn-generate").onclick = openTeacherPopup;
 
+// بناء الكروت عند التحميل
 buildCards();
-
 </script>
+
 </body>
 </html>
