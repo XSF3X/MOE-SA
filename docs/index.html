@@ -834,62 +834,69 @@
 
   async function exportPptx() {
     if (!state.qrImages || state.qrImages.length === 0) {
-      alert("لا يوجد رموز QR لتصديرها.");
-      return;
+        alert("لا يوجد رموز QR لتصديرها.");
+        return;
     }
 
+    // اطلب اسم المعلم بالعربي – إجباري
+    let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
+    if (!teacherArabic || teacherArabic.trim() === "") {
+        alert("يجب إدخال الاسم قبل متابعة التصدير.");
+        return;
+    }
+    teacherArabic = teacherArabic.trim();
+
     try {
-      setPptxLoading(true);
+        setPptxLoading(true);
 
-      const resp = await fetch("template.pptx");
-      if (!resp.ok) {
-        throw new Error("تعذر تحميل template.pptx من نفس المجلد.");
-      }
-      const buf = await resp.arrayBuffer();
-      const zip = await JSZip.loadAsync(buf);
-
-      const startSlide = 8; // المعيار الأول في الشريحة 8
-      const qrCount = state.qrImages.length;
-
-      for (let i = 0; i < qrCount; i++) {
-        const slideNum = startSlide + i;
-        const slidePath = `ppt/slides/slide${slideNum}.xml`;
-        const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
-
-        if (!zip.file(slidePath)) {
-          console.warn("Slide not found:", slidePath);
-          continue;
+        const resp = await fetch("template.pptx");
+        if (!resp.ok) {
+            throw new Error("تعذر تحميل template.pptx من نفس المجلد.");
         }
+        const buf = await resp.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
 
-        const dataUrl = state.qrImages[i];
-        const base64 = dataUrl.split(",")[1];
-        const imgName = `qr_${i+1}.png`;
+        const startSlide = 8;
+        const qrCount = state.qrImages.length;
 
-        // كتابة الصورة في ppt/media
-        zip.file(`ppt/media/${imgName}`, base64, { base64: true });
+        for (let i = 0; i < qrCount; i++) {
+            const slideNum = startSlide + i;
+            const slidePath = `ppt/slides/slide${slideNum}.xml`;
+            const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
 
-        // تحديث relationships
-        let relsXml;
-        if (zip.file(relsPath)) {
-          relsXml = await zip.file(relsPath).async("string");
-        } else {
-          relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            if (!zip.file(slidePath)) {
+                console.warn("Slide not found:", slidePath);
+                continue;
+            }
+
+            // إدراج QR في الشريحة
+            const dataUrl = state.qrImages[i];
+            const base64 = dataUrl.split(",")[1];
+            const imgName = `qr_${i+1}.png`;
+            zip.file(`ppt/media/${imgName}`, base64, { base64: true });
+
+            let relsXml = zip.file(relsPath)
+                ? await zip.file(relsPath).async("string")
+                : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
-        }
 
-        const relId = `rId_qr_${i+1}`;
-        if (!relsXml.includes(`Id="${relId}"`)) {
-          relsXml = relsXml.replace(
-            "</Relationships>",
-            `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
-          );
-        }
-        zip.file(relsPath, relsXml);
+            const relId = `rId_qr_${i+1}`;
 
-        // تعديل slide لإضافة <p:pic> في نهاية spTree
-        let slideXml = await zip.file(slidePath).async("string");
+            if (!relsXml.includes(`Id="${relId}"`)) {
+                relsXml = relsXml.replace(
+                    "</Relationships>",
+                    `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
+                );
+            }
+            zip.file(relsPath, relsXml);
 
-        const picXml = `
+            let slideXml = await zip.file(slidePath).async("string");
+
+            // استبدال ∑ بالاسم العربي
+            slideXml = slideXml.replace(/∑/g, teacherArabic);
+
+            // إضافة QR في نهاية spTree
+            const picXml = `
 <p:pic xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -900,40 +907,35 @@
   </p:nvPicPr>
   <p:blipFill>
     <a:blip r:embed="${relId}"/>
-    <a:stretch>
-      <a:fillRect/>
-    </a:stretch>
+    <a:stretch><a:fillRect/></a:stretch>
   </p:blipFill>
   <p:spPr>
     <a:xfrm>
       <a:off x="6217920" y="4251840"/>
       <a:ext cx="2421600" cy="2257680"/>
     </a:xfrm>
-    <a:prstGeom prst="rect">
-      <a:avLst/>
-    </a:prstGeom>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
   </p:spPr>
 </p:pic>`;
 
-        slideXml = slideXml.replace("</p:spTree>", `${picXml}</p:spTree>`);
-        zip.file(slidePath, slideXml);
-      }
+            slideXml = slideXml.replace("</p:spTree>", `${picXml}</p:spTree>`);
+            zip.file(slidePath, slideXml);
+        }
 
-      const outBlob = await zip.generateAsync({ type: "blob" });
-      const teacherFolder = "TEACHER-SA";
-      const teacherName = (loggedInUser || "teacher").replace(/\s+/g, "-");
-      const fileName = `${teacherFolder}-${teacherName}.pptx`;
-      saveAs(outBlob, fileName);
+        const outBlob = await zip.generateAsync({ type: "blob" });
+        const teacherName = (loggedInUser || "teacher").replace(/\s+/g, "-");
+        const fileName = `ملف-انجاز-${teacherName}.pptx`;
+        saveAs(outBlob, fileName);
 
-      alert("تم إنشاء ملف PowerPoint بنجاح ✅");
+        alert("تم إنشاء ملف PowerPoint مع استبدال الرمز ∑ بنجاح ✓");
 
     } catch (err) {
-      console.error(err);
-      alert("حدث خطأ أثناء إنشاء ملف البوربوينت: " + err.message);
+        console.error(err);
+        alert("حدث خطأ أثناء إنشاء ملف البوربوينت: " + err.message);
     } finally {
-      setPptxLoading(false);
+        setPptxLoading(false);
     }
-  }
+}
 
   // تهيئة الصفحة بعد التحميل
   function initPage() {
@@ -970,3 +972,4 @@
 </script>
 </body>
 </html>
+
