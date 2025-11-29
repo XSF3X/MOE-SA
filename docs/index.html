@@ -643,85 +643,105 @@
 </html>`;
   }
 
-  async function generateAll() {
+ async function generateAll() {
     const teacherNameInput = document.getElementById("teacher-name");
     const teacherFolderInput = document.getElementById("teacher-folder");
 
+    // ⭐ 1 — اسم المعلم إلزامي
+    let teacherName = (teacherNameInput.value || "").trim();
+    if (!teacherName) {
+        alert("❌ يرجى إدخال اسم المعلم");
+        return;
+    }
+
+    // تنظيف الاسم لاستخدامه كمجلد
+    let safeTeacherName = teacherName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s_-]/g, "").trim();
+    safeTeacherName = safeTeacherName.replace(/\s+/g, "-"); // مسافات تصبح -
+
+    // ⭐ 2 — مجلد TEACHER-SA إلزامي
     let teacherFolder = (teacherFolderInput.value || "").trim();
     teacherFolder = teacherFolder.replace(/[^a-zA-Z0-9_-]/g, "");
     if (!teacherFolder) {
-      alert("الرجاء إدخال اسم مجلد المعلم (حروف إنجليزية فقط).");
-      return;
+        alert("❌ يرجى إدخال اسم مجلد رئيسي (TEACHER-SA مثلاً)");
+        return;
     }
+
     teacherFolderInput.value = teacherFolder;
 
-    const teacherName = (teacherNameInput.value || "").trim() || "معلم بدون اسم";
+    // ⭐ 3 — الوجهة النهائية داخل docs
+    const fullFolder = `docs/${teacherFolder}/${safeTeacherName}`;
 
     const selectedCriteria = state.criteria.filter(c => c.files.length > 0);
     if (selectedCriteria.length === 0) {
-      alert("لم يتم اختيار أي صور لأي معيار.");
-      return;
+        alert("⚠ لم يتم اختيار أي صور لأي معيار.");
+        return;
     }
 
     try {
-      setLoading(true);
-      setStatus("جاري إنشاء الصفحات ورفعها إلى GitHub ...");
+        setLoading(true);
+        setStatus("جاري إنشاء الصفحات ورفعها إلى GitHub ...");
 
-      // تأكد من وجود _config.yml
-      await ensureConfigYml();
+        await ensureConfigYml();
 
-      const qrItems = [];
+        const qrItems = [];
 
-      for (const criterion of selectedCriteria) {
-        setStatus(`معالجة ${criterion.name} (${criterion.files.length} صورة)...`);
+        // ⭐ 4 — لكل معيار
+        for (const criterion of selectedCriteria) {
+            setStatus(`معالجة ${criterion.name} (${criterion.files.length} صورة)...`);
 
-        const imgDataUrls = [];
-        for (const file of criterion.files) {
-          const d = await fileToDataURL(file);
-          imgDataUrls.push(d);
+            const imgDataUrls = [];
+            for (const file of criterion.files) {
+                const d = await fileToDataURL(file);
+                imgDataUrls.push(d);
+            }
+
+            const html = buildCriterionHtml(teacherName, criterion.name, imgDataUrls);
+
+            // ⭐ مسار الرفع الصحيح
+            const uploadPath = `${fullFolder}/criterion-${criterion.id}.html`;
+            await githubUpload(uploadPath, html);
+
+            // ⭐ رابط عام بدون docs
+            const publicURL =
+                `${state.baseUrl}/${teacherFolder}/${safeTeacherName}/criterion-${criterion.id}.html`;
+
+            qrItems.push({
+                id: criterion.id,
+                name: criterion.name,
+                url: publicURL
+            });
         }
 
-        const html = buildCriterionHtml(teacherName, criterion.name, imgDataUrls);
+        setStatus("جاري توليد رموز QR ...");
+        const qrImages = [];
 
-        // مسار فعلي داخل docs/<teacher>/<criterion-X.html>
-        const uploadPath = `docs/${teacherFolder}/criterion-${criterion.id}.html`;
-        await githubUpload(uploadPath, html);
+        for (const item of qrItems) {
+            const dataUrl = await QRCode.toDataURL(item.url, {
+                width: 512,
+                margin: 1
+            });
+            qrImages.push(dataUrl);
+        }
 
-        // رابط عام بدون docs
-        const publicURL = `${state.baseUrl}/${teacherFolder}/criterion-${criterion.id}.html`;
-        qrItems.push({
-          id: criterion.id,
-          name: criterion.name,
-          url: publicURL
-        });
-      }
+        state.qrItems = qrItems;
+        state.qrImages = qrImages;
 
-      setStatus("جاري توليد رموز QR ...");
-      const qrImages = [];
-      for (const item of qrItems) {
-        const dataUrl = await QRCode.toDataURL(item.url, {
-          width: 512,
-          margin: 1
-        });
-        qrImages.push(dataUrl);
-      }
+        renderQrList();
 
-      state.qrItems = qrItems;
-      state.qrImages = qrImages;
-      renderQrList();
+        setStatus("تم إنشاء الصفحات والروابط و QR بنجاح ✅");
 
-      setStatus("تم إنشاء الصفحات والروابط و QR بنجاح ✅");
-      document.getElementById("btn-export-pptx").disabled = false;
-      document.getElementById("qr-empty").style.display = "none";
+        document.getElementById("btn-export-pptx").disabled = false;
+        document.getElementById("qr-empty").style.display = "none";
 
     } catch (err) {
-      console.error(err);
-      setStatus("حدث خطأ أثناء المعالجة: " + err.message, true);
-      alert("خطأ: " + err.message);
+        console.error(err);
+        setStatus("حدث خطأ أثناء المعالجة: " + err.message, true);
+        alert("خطأ: " + err.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  }
+}
+
 
   function renderQrList() {
     const list = document.getElementById("qr-list");
@@ -900,3 +920,4 @@
 </script>
 </body>
 </html>
+
