@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ملف إنجاز المعلم - توليد الصفحات والـ QR</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", sans-serif;
+      background: #0d1117;
+      color: #fff;
+    }
+
+    header {
+      background: #111;
+      padding: 14px 20px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      border-bottom: 1px solid #222;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 1100px;
+      margin: 25px auto;
+    }
+
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .crit-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .crit-title {
+      font-size: 18px;
+      color: #4cc9f0;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .crit-count {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 12px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      background: #2389ff;
+      border: none;
+      padding: 10px 14px;
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #1b6fd1;
+    }
+
+    .actions {
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    #btn-generate {
+      background: #00b7ff;
+      padding: 14px 24px;
+      font-size: 20px;
+      border-radius: 14px;
+      font-weight: bold;
+    }
+
+    #btn-generate:hover {
+      background: #009ad6;
+    }
+
+    .qr-section {
+      margin-top: 40px;
+      display: none;
+    }
+
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .qr-item {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .qr-item-title {
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .qr-item-url {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 5px;
+      word-break: break-all;
+      direction: ltr;
+    }
+
+    /* Popup */
+    .popup-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .popup {
+      background: #161b22;
+      padding: 20px;
+      border-radius: 14px;
+      width: 320px;
+      border: 1px solid #30363d;
+    }
+
+    .popup h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .popup input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+      background: #0d1117;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .popup-actions {
+      text-align: right;
+      margin-top: 14px;
+    }
+
+    .btn-popup {
+      background: #00aaff;
+      border: none;
+      padding: 10px 14px;
+      color: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+<header>📁 ملف إنجاز المعلّم – توليد الصفحات و QR</header>
+
+<div class="container">
+
+  <div id="criteria-grid" class="criteria-grid"></div>
+
+  <div class="actions">
+    <button id="btn-generate">🚀 توليد الصفحات و QR</button>
+  </div>
+
+  <div id="qr-section" class="qr-section">
+    <h2>روابط المعايير</h2>
+    <div id="qr-grid" class="qr-grid"></div>
+  </div>
+</div>
+
+<!-- Popup -->
+<div id="teacherPopup" class="popup-backdrop">
+  <div class="popup">
+    <h3>اسم المعلّم</h3>
+    <input id="teacherNameInput" type="text" placeholder="اكتب اسمك هنا…" />
+    <div class="popup-actions">
+      <button class="btn-popup" onclick="confirmTeacherName()">تأكيد</button>
+    </div>
+  </div>
+</div>
+<script>
+/* ============================
+   الإعدادات الأساسية
+============================ */
+
+const GITHUB_PAGES_BASE = "https://xsf3x.github.io/MOE-SA/";   // بدون docs
+const WORKER_URL        = "https://moe-uploader.snh-saud.workers.dev/"; // الرفع
+
+// عدد المعايير
+const CRITERIA = [
+  { id: 1,  title: "المعيار الأول" },
+  { id: 2,  title: "المعيار الثاني" },
+  { id: 3,  title: "المعيار الثالث" },
+  { id: 4,  title: "المعيار الرابع" },
+  { id: 5,  title: "المعيار الخامس" },
+  { id: 6,  title: "المعيار السادس" },
+  { id: 7,  title: "المعيار السابع" },
+  { id: 8,  title: "المعيار الثامن" },
+  { id: 9,  title: "المعيار التاسع" },
+  { id: 10, title: "المعيار العاشر" },
+  { id: 11, title: "المعيار الحادي عشر" },
+  { id: 12, title: "منجزات أخرى" }
+];
+
+const state = {
+  teacherName: "",
+  teacherFolder: "",
+  criteriaFiles: {},  // id -> array of File
+  pages: {}           // id -> { url, qr }
+};
+
+/* ============================
+   إنشاء slug إنجليزي لاسم المعلم
+   مثال: "سعود الشريف" → "saud-alshareef"
+============================ */
+
+function slugify(text) {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u064B-\u0652]/g, "") // إزالة التشكيل العربي
+    .replace(/[\u0600-\u06FF]/g, "") // إزالة الحروف العربية كاملة
+    .replace(/[^a-zA-Z0-9]+/g, "-")  // استبدال كل الرموز والفراغات بشرطة
+    .replace(/-+/g, "-")             // لا نكرر الشرطة
+    .replace(/^-|-$/g, "")           // إزالة الشرطة من البداية والنهاية
+    .toLowerCase();
+}
+
+/* ============================
+   بناء بطاقات (UI) المعايير
+============================ */
+
+function buildCards() {
+  const grid = document.getElementById("criteria-grid");
+
+  CRITERIA.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "crit-card";
+
+    card.innerHTML = `
+      <div>
+        <div class="crit-title">${c.title}</div>
+        <div class="crit-count" id="count-${c.id}">لم يتم اختيار صور</div>
+      </div>
+
+      <button class="btn" type="button">📁 اختيار صور</button>
+      <input id="file-${c.id}" type="file" accept="image/*" multiple>
+    `;
+
+    grid.appendChild(card);
+
+    const btn = card.querySelector("button");
+    const input = card.querySelector("input");
+    const countEl = document.getElementById(`count-${c.id}`);
+
+    btn.addEventListener("click", () => input.click());
+
+    input.addEventListener("change", e => {
+      const files = Array.from(e.target.files || []);
+      state.criteriaFiles[c.id] = files;
+
+      if (!files.length) {
+        countEl.textContent = "لم يتم اختيار صور";
+      } else {
+        countEl.textContent = `${files.length} صورة`;
+      }
+    });
+  });
+}
+
+/* ============================
+   قراءة صورة → Base64 DataURL
+============================ */
+
+function readAsDataURL(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+/* ============================
+   توليد صفحة HTML لكل معيار
+============================ */
+
+function buildCriterionHTML(teacherName, critTitle, imagesDataUrls) {
+
+  const imagesHTML = imagesDataUrls.map((src, i) => `
+    <div style="max-width:900px;margin:20px auto;">
+      <img src="${src}" style="width:100%;border-radius:12px;box-shadow:0 0 8px rgba(0,0,0,0.15);">
+    </div>
+  `).join("");
+
+  return `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>${critTitle} - ${teacherName}</title>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.8;
+    }
+    h1 { margin-bottom: 6px; }
+    h2 { margin-top: 0; color: #666; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>${critTitle}</h1>
+  <h2>${teacherName}</h2>
+
+  ${imagesHTML}
+
+</body>
+</html>
+  `;
+}
+
+/* ============================
+   رفع ملف HTML إلى GitHub
+   عبر Cloudflare Worker
+============================ */
+
+async function githubUpload(path, content) {
+
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, content })
+  });
+
+  const text = await res.text();
+  let data;
+
+  try { data = JSON.parse(text); }
+  catch { data = text; }
+
+  if (!res.ok || (data && data.ok === false)) {
+    console.error("Upload error:", data);
+    throw new Error("GitHub upload failed: " + res.status);
+  }
+
+  return data;
+}
+
+/* ============================
+   توليد QR (Canvas → Base64)
+============================ */
+
+function generateQR(url) {
+  return new Promise(resolve => {
+    const wrapper = document.createElement("div");
+    const el = document.createElement("div");
+    wrapper.appendChild(el);
+
+    new QRCode(el, {
+      text: url,
+      width: 200,
+      height: 200
+    });
+
+    setTimeout(() => {
+      const canvas = wrapper.querySelector("canvas");
+      const dataUrl = canvas ? canvas.toDataURL("image/png") : "";
+      resolve(dataUrl);
+    }, 220);
+  });
+}
+/* ============================
+   التوليد الكامل لجميع المعايير
+============================ */
+
+async function generateAll() {
+
+  // تأكد أن هناك صور
+  const any = Object.values(state.criteriaFiles).some(arr => arr && arr.length);
+  if (!any) {
+    alert("يرجى اختيار صور لأحد المعايير.");
+    return;
+  }
+
+  // لو ما كتب اسم المعلّم — نظهر النافذة
+  if (!state.teacherName.trim()) {
+    openTeacherPopup();
+    return;
+  }
+
+  // تصفيف اسم المجلد الخاص بالمعلم
+  state.teacherFolder = slugify(state.teacherName);
+  if (!state.teacherFolder) {
+    alert("اسم المعلم غير صالح. أدخل اسم صحيح.");
+    return;
+  }
+
+  const qrSection = document.getElementById("qr-section");
+  const qrGrid = document.getElementById("qr-grid");
+  qrGrid.innerHTML = "";
+  qrSection.style.display = "none";
+
+  alert("جاري رفع صفحات المعايير… يرجى الانتظار.");
+
+  try {
+
+    for (const crit of CRITERIA) {
+
+      const files = state.criteriaFiles[crit.id] || [];
+      if (!files.length) continue;
+
+      // تحويل كل الصور إلى Base64
+      const dataUrls = [];
+      for (const f of files) {
+        const d = await readAsDataURL(f);
+        dataUrls.push(d);
+      }
+
+      // بناء صفحة HTML
+      const html = buildCriterionHTML(state.teacherName, crit.title, dataUrls);
+
+      // 🔥 مسار الرفع: داخل docs/مجلد_المعلم
+      const path = `docs/${state.teacherFolder}/criterion-${crit.id}.html`;
+
+      await githubUpload(path, html);
+
+      // 🔥 رابط العرض: بدون كلمة docs
+      const publicUrl = `${GITHUB_PAGES_BASE}${state.teacherFolder}/criterion-${crit.id}.html`;
+
+      // توليد الـ QR
+      const qrData = await generateQR(publicUrl);
+      state.pages[crit.id] = { url: publicUrl, qr: qrData };
+
+      // عرض داخل الصفحة
+      const item = document.createElement("div");
+      item.className = "qr-item";
+
+      item.innerHTML = `
+        <div class="qr-item-title">${crit.title}</div>
+        <img src="${qrData}" width="150" height="150" />
+        <div class="qr-item-url">${publicUrl}</div>
+      `;
+
+      qrGrid.appendChild(item);
+    }
+
+    qrSection.style.display = "block";
+    alert("تم توليد الصفحات و QR بنجاح ✔");
+
+  } catch (e) {
+    console.error(e);
+    alert("حدث خطأ أثناء رفع الملفات:\n" + e.message);
+  }
+}
+
+/* ============================
+   إدارة Popup اسم المعلّم
+============================ */
+
+function openTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "flex";
+  document.getElementById("teacherNameInput").focus();
+}
+
+function closeTeacherPopup() {
+  document.getElementById("teacherPopup").style.display = "none";
+}
+
+function confirmTeacherName() {
+  const val = document.getElementById("teacherNameInput").value.trim();
+  if (!val) return;
+
+  state.teacherName = val;
+  closeTeacherPopup();
+  generateAll(); // نكمل العملية
+}
+
+/* ============================
+   التشغيل
+============================ */
+
+document.getElementById("btn-generate").addEventListener("click", () => {
+  if (!state.teacherName.trim()) {
+    openTeacherPopup();
+  } else {
+    generateAll();
+  }
+});
+
+// بناء الواجهة عند فتح الصفحة
+buildCards();
+
+</script>
+</body>
+</html>
