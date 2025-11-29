@@ -523,7 +523,7 @@
           dataUrls.push(d);
         }
 
-        const path = `pages/${TEACHER_FOLDER}/criterion-${crit.id}.html`;
+        const path = `docs/${TEACHER_FOLDER}/criterion-${crit.id}.html`;
         const html = buildCriterionHTML(state.teacherName, crit.title, dataUrls);
 
         await githubUpload(path, html);
