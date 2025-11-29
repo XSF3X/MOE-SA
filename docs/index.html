@@ -831,6 +831,28 @@
       list.appendChild(card);
     });
   }
+// استبدال placeholder في جميع شرائح البوربوينت
+async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
+  const slideFolder = "ppt/slides/";
+
+  // نجيب كل ملفات الشرائح ppt/slides/slideX.xml
+  const files = Object.keys(zip.files).filter(
+    (name) => name.startsWith(slideFolder) && name.endsWith(".xml")
+  );
+
+  for (const filePath of files) {
+    let xmlText = await zip.file(filePath).async("string");
+
+    // استبدال دقيق داخل <a:t>∑</a:t>
+    xmlText = xmlText.replace(/<a:t>∑<\/a:t>/g, `<a:t>${replacement}</a:t>`);
+
+    // ولو فيه ∑ في أي مكان آخر برضه نستبدله
+    const re = new RegExp(placeholder, "g");
+    xmlText = xmlText.replace(re, replacement);
+
+    zip.file(filePath, xmlText);
+  }
+}
 
   async function exportPptx() {
     if (!state.qrImages || state.qrImages.length === 0) {
@@ -961,5 +983,6 @@
 </script>
 </body>
 </html>
+
 
 
