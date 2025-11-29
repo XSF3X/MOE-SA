@@ -584,10 +584,11 @@ async function exportPptx() {
       let slideXml = await slideFile.async("string");
 
       // حجم ومكان الـ QR (ثابت، عدّل الأرقام لو حاب تغيّر المكان)
-      const x = 2500000; // إزاحة X
-      const y = 1200000; // إزاحة Y
-      const cx = 3000000; // العرض
-      const cy = 3000000; // الارتفاع
+const qrX = 6217920;   // 6.8 inch
+const qrY = 4251840;   // 4.65 inch
+const qrW = 2421600;   // 2.65 inch
+const qrH = 2257680;   // 2.47 inch
+
 
       const picXml = `
       <p:pic>
@@ -653,3 +654,4 @@ buildCards();
 </script>
 </body>
 </html>
+
