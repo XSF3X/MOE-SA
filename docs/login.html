@@ -4,51 +4,76 @@
 <meta charset="UTF-8">
 <title>تسجيل الدخول</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
 
 body {
-  margin:0;
-  font-family:"Cairo",sans-serif;
-  background:#0f172a;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+  margin: 0;
+  font-family: "Cairo", sans-serif;
+  background: linear-gradient(135deg, #0f766e, #0f172a);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
-  width:330px;
-  background:#1e293b;
-  padding:25px;
-  border-radius:18px;
-  text-align:center;
-  box-shadow:0 0 20px rgba(0,0,0,0.4);
+  width: 360px;
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 22px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0,0,0,0.35);
 }
 
-input, select {
-  width:100%;
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  margin-bottom:15px;
-  background:#334155;
-  color:#fff;
+.logo-box {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 15px auto;
+}
+
+.logo-box img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  margin-bottom: 14px;
+  background: #334155;
+  color: #fff;
+  font-size: 15px;
 }
 
 button {
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#14b8a6;
-  font-size:16px;
-  cursor:pointer;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #14b8a6;
+  font-size: 17px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 600;
 }
+
 #error {
-  color:#f87171;
-  margin-bottom:10px;
+  color: #f87171;
+  margin-bottom: 10px;
+  min-height: 20px;
 }
 </style>
 </head>
@@ -56,6 +81,11 @@ button {
 <body>
 
 <div class="card">
+
+  <div class="logo-box">
+    <img src="teacher_logo.png" alt="logo">
+  </div>
+
   <h2>تسجيل الدخول</h2>
 
   <div id="error"></div>
@@ -64,6 +94,7 @@ button {
   <input id="password" type="password" placeholder="كلمة المرور">
 
   <button onclick="login()">دخول</button>
+
 </div>
 
 <script>
@@ -74,7 +105,7 @@ async function login() {
   const u = document.getElementById("username").value.trim().toLowerCase();
   const p = document.getElementById("password").value.trim();
 
-  if(!u || !p){
+  if (!u || !p) {
     err.textContent = "الرجاء إدخال اسم المستخدم وكلمة المرور.";
     return;
   }
@@ -90,13 +121,13 @@ async function login() {
   const list = users.users || [];
   const user = list.find(x => x.username.toLowerCase() === u && x.password === p);
 
-  if(!user){
+  if (!user) {
     err.textContent = "بيانات الدخول غير صحيحة.";
     return;
   }
 
-  // تحويل المستخدم حسب الدور
-  if(user.role === "admin") {
+  // تحويل حسب الدور
+  if (user.role === "admin") {
     window.location.href = "admin.html";
   } else {
     window.location.href = "index.html";
