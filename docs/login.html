@@ -150,27 +150,39 @@ button:hover {
 
 function login() {
   const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
-  const err = document.getElementById("error");
+const p = document.getElementById("password").value.trim();
+const err = document.getElementById("error");
 
-  if (!u || !p) {
-    err.textContent = "الرجاء إدخال اسم المستخدم وكلمة المرور.";
-    return;
-  }
+if (!u || !p) {
+  err.textContent = "الرجاء إدخال اسم المستخدم وكلمة المرور.";
+  return;
+}
 
-  let users;
-  try {
-    users = JSON.parse(localStorage.getItem("usersDB") || "[]");
-  } catch(e) {
-    users = [];
-  }
+let users;
+try {
+  users = JSON.parse(localStorage.getItem("usersDB") || "[]");
+} catch(e) {
+  users = [];
+}
 
-  const found = users.find(x => x.user === u && x.pass === p);
+// المقارنة بدون حساسية لاختلاف الحروف
+const found = users.find(
+  x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p
+);
 
-  if (!found) {
-    err.textContent = "بيانات تسجيل الدخول غير صحيحة.";
-    return;
-  }
+if (!found) {
+  err.textContent = "بيانات تسجيل الدخول غير صحيحة.";
+  return;
+}
+
+localStorage.setItem("loggedInUser", found.user);
+
+if (found.user.toLowerCase() === "admin") {
+  window.location.href = "admin.html";
+} else {
+  window.location.href = "index.html";
+}
+
 
   localStorage.setItem("loggedInUser", found.user);
 
@@ -188,3 +200,4 @@ document.addEventListener("keydown", function(e){
 
 </body>
 </html>
+
