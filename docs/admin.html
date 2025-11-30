@@ -81,81 +81,95 @@ td, th {
 <script>
 const API = "https://moe-users.snh-saud.workers.dev/";
 
-async function loadUsers(){
-  const res = await fetch(API);
+// تحميل المستخدمين مباشرة عند الدخول
+window.onload = () => loadUsers();
+
+async function loadUsers() {
+  const res = await fetch(API + "?get=1");
   const data = await res.json();
 
-  const users = data.users || [];
-  const table = document.getElementById("usersTable");
+  const table = document.getElementById("usersTableBody");
+  table.innerHTML = "";
 
-  table.innerHTML = `
-    <tr>
-      <th>اسم المستخدم</th>
-      <th>الدور</th>
-      <th>تحكم</th>
-    </tr>
-  `;
+  if (!data.success || !Array.isArray(data.users)) {
+    table.innerHTML = "<tr><td colspan='3'>خطأ في التحميل</td></tr>";
+    return;
+  }
 
-  users.forEach(u=>{
-    table.innerHTML += `
-      <tr>
-        <td>${u.username}</td>
-        <td>${u.role}</td>
-        <td>
-          <button onclick="deleteUser('${u.username}')">حذف</button>
-        </td>
-      </tr>
+  data.users.forEach(user => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${user.username}</td>
+      <td>${user.role || "-"}</td>
+      <td>
+        <button class="btn-del" onclick="deleteUser('${user.username}')">حذف</button>
+      </td>
     `;
+
+    table.appendChild(tr);
   });
 }
 
-async function addUser(){
+// إضافة مستخدم جديد
+async function addUser() {
   const username = document.getElementById("newUser").value.trim().toLowerCase();
   const password = document.getElementById("newPass").value.trim();
   const role = document.getElementById("newRole").value;
 
-  if(!username || !password){
+  if (!username || !password) {
     alert("الرجاء تعبئة كل الحقول.");
     return;
   }
 
   const res = await fetch(API, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ username, password, role })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "add",
+      username,
+      password,
+      role
+    })
   });
 
   const data = await res.json();
 
-  if(!data.success){
+  if (!res.ok || data.error) {
     alert(data.error || "فشل الإضافة");
     return;
   }
 
+  alert("تمت إضافة المستخدم بنجاح");
   loadUsers();
 }
 
-async function deleteUser(username){
-  if(!confirm("تأكيد حذف المستخدم؟")) return;
+// حذف مستخدم
+async function deleteUser(username) {
+  if (!confirm("تأكيد حذف المستخدم؟")) return;
 
   const res = await fetch(API, {
-    method:"DELETE",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ username })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "delete",
+      username
+    })
   });
 
   const data = await res.json();
 
-  if(!data.success){
-    alert("فشل الحذف");
+  if (!res.ok || data.error) {
+    alert(data.error || "فشل الحذف");
     return;
   }
 
+  alert("تم الحذف بنجاح");
   loadUsers();
 }
-
-loadUsers();
 </script>
+
 
 </body>
 </html>
+
