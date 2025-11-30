@@ -332,7 +332,7 @@ img.teacher-logo {
     <div class="teacher-box">
       <label>اسم المعلم (من تسجيل الدخول):</label>
       <input id="teacher-name" type="text" placeholder="اسم المستخدم" />
-      <label> ملف المعلمين (ثابت):</label>
+      <label> ملف المعلمين:</label>
       <input id="teacher-folder" type="text" placeholder="TEACHER-SA" value="TEACHER-SA" />
      
     </div>
@@ -344,7 +344,7 @@ img.teacher-logo {
     <section class="panel">
       <div class="panel-title">المعايير (12 معيار)</div>
       <div class="panel-sub">
-        اختر صور الشواهد لكل معيار. كل معيار سيحصل على صفحة HTML مستقلة .
+        اختر صور الشواهد لكل معيار. كل معيار سيحصل على صفحة مستقلة .
       </div>
 
       <div id="criteria-grid" class="criteria-grid"></div>
@@ -363,7 +363,7 @@ img.teacher-logo {
 
     <!-- يمين: QR + PPTX -->
     <section class="panel">
-      <div class="panel-title">روابط و رموز QR</div>
+      <div class="panel-title">/ إنتظر دقيقة لتفعيل رابط الباركود QR</div>
       <div class="panel-sub">
         بعد التوليد، ستظهر هنا روابط كل معيار مع QR خاص به، ويمكن تنزيل ملف PowerPoint النهائي.
       </div>
@@ -380,8 +380,6 @@ img.teacher-logo {
         <div id="pptx-spinner" class="spinner" style="display:none;"></div>
       </div>
       <div class="footer-note">
-        سيتم استخدام ملف <code>template.pptx</code> من نفس المجلد، ويوضع كل QR في الشريحة المناسبة
-        (ابتداءً من الشريحة 8)، في مكان محدد ثابت يقابل المربع الوردي في القالب.
       </div>
     </section>
   </div>
@@ -982,6 +980,7 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
 </script>
 </body>
 </html>
+
 
 
 
