@@ -1,5 +1,4 @@
 {
-  "success": true,
   "users": [
     {
       "username": "admin",
@@ -10,6 +9,11 @@
       "username": "alaa",
       "password": "16",
       "role": "teacher"
+    },
+    {
+      "username": "sf",
+      "password": "Saudi151",
+      "role": "admin"
     }
   ]
 }
