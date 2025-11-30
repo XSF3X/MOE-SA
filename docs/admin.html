@@ -13,6 +13,35 @@
         color: #fff;
     }
 
+    .top-bar {
+        width: 100%;
+        padding: 15px;
+        background: #162037;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .top-btn {
+        background: #04c29e;
+        padding: 10px 18px;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+
+    .logout-btn {
+        background: #d62f43;
+        padding: 10px 18px;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+
     .container {
         width: 90%;
         margin: 40px auto;
@@ -82,6 +111,12 @@
 
 <body>
 
+<!-- الشريط العلوي -->
+<div class="top-bar">
+    <a href="index.html" class="top-btn">العودة للصفحة الرئيسية</a>
+    <span class="logout-btn" onclick="logout()">تسجيل خروج</span>
+</div>
+
 <div class="container">
 
     <h2>إضافة مستخدم</h2>
@@ -116,6 +151,14 @@
 
 <script>
 const API = "https://moe-users.snh-saud.workers.dev/";
+
+// -----------------------------
+// زر تسجيل خروج
+// -----------------------------
+function logout(){
+    sessionStorage.clear();
+    window.location.href = "login.html";
+}
 
 // ============================
 // تحميل المستخدمين
@@ -211,10 +254,9 @@ function showMsg(text, error=false){
 // زر الإضافة
 document.getElementById("addBtn").onclick = addUser;
 
-// Enter = إضافة + منع أي refresh
+// Enter = إضافة
 document.addEventListener("keydown", e => {
     if(e.key === "Enter") addUser();
-    e.preventDefault();
 });
 
 loadUsers();
