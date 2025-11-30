@@ -390,209 +390,231 @@ img.teacher-logo {
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 
+
+
 <script>
+// =======================
+// تأمين الصفحة + قراءة المستخدم من تسجيل الدخول
+// =======================
 
+// نقرأ المستخدم المخزّن في جلسة المتصفح من login.html
+const loggedInUserRaw = sessionStorage.getItem("loggedInUser");
 
-	const user = JSON.parse(sessionStorage.getItem("user"));
-if(!user){
-    window.location.href = "login.html";
+// لو ما فيه جلسة → نرجع لصفحة الدخول
+if (!loggedInUserRaw) {
+  window.location.href = "login.html";
 }
-	
-  // التحقق من تسجيل الدخول
-  const loggedInUser = localStorage.getItem("loggedInUser");
-  if (!loggedInUser) {
-    window.location.href = "login.html";
-  }
 
-  // الحالة العامة
+// نفك JSON بأمان
+let user = null;
+try {
+  user = JSON.parse(loggedInUserRaw);
+} catch (e) {
+  user = null;
+}
 
-  const state = {
-    criteria: [],
-    qrItems: [],       // {id, name, url}
-    qrImages: [],      // dataURL for each QR
-    workerUrl: "https://moe-uploader.snh-saud.workers.dev/",
-    baseUrl: "https://xsf3x.github.io/MOE-SA"
-  };
+// لو JSON خربان أو ما فيه username → نرجع للدخول
+if (!user || !user.username) {
+  sessionStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+}
 
-  const criteriaNames = [
-    "المعيار  الأول : أداء الواجبات الوظيفية",
-    "المعيار الثاني : التفاعل مع المجتمع المهني",
-    "المعيار  الثالث : التفاعل مع أولياء الأمور",
-    "المعيار الرابع : التنويع في إستراتيجيات التدريس",
-    "المعيار الخامس  : تحسين نتائج المتعلمين",
-    "المعيار السادس : إعداد وتنفيذ خطة التعلم",
-    "المعيار السابع : توظيف تقنيات ووسائل التعلم المناسبة",
-    "المعيار الثامن : تهيئة البيئة التعليمية",
-    "المعيار التاسع : الإدارة الصفية",
-    "المعيار العاشر : تحليل نتائج المتعلمين وتشخيص مستوياتهم",
-    "المعيار الحادي عشر : تنوع أساليب وأدوات التقويم",
-    "منجزات أخرى خلال العام الدراسي ١٤٤٧هـ"
-  ];
+// هذا اللي بنستخدمه كاسم مستخدم في الصفحة
+const loggedInUser = user.username;
 
-  function buildCriteriaCards() {
-    const grid = document.getElementById("criteria-grid");
-    grid.innerHTML = "";
-    state.criteria = [];
+// =======================
+// الحالة العامة
+// =======================
 
-    criteriaNames.forEach((name, idx) => {
-      const id = idx + 1;
+const state = {
+  criteria: [],
+  qrItems: [],   // {id, name, url}
+  qrImages: [],  // dataURL لكل QR
+  workerUrl: "https://moe-uploader.snh-saud.workers.dev/",
+  baseUrl: "https://xsf3x.github.io/MOE-SA"
+};
 
-      const card = document.createElement("div");
-      card.className = "criterion-card";
+const criteriaNames = [
+  "المعيار  الأول : أداء الواجبات الوظيفية",
+  "المعيار الثاني : التفاعل مع المجتمع المهني",
+  "المعيار  الثالث : التفاعل مع أولياء الأمور",
+  "المعيار الرابع : التنويع في إستراتيجيات التدريس",
+  "المعيار الخامس  : تحسين نتائج المتعلمين",
+  "المعيار السادس : إعداد وتنفيذ خطة التعلم",
+  "المعيار السابع : توظيف تقنيات ووسائل التعلم المناسبة",
+  "المعيار الثامن : تهيئة البيئة التعليمية",
+  "المعيار التاسع : الإدارة الصفية",
+  "المعيار العاشر : تحليل نتائج المتعلمين وتشخيص مستوياتهم",
+  "المعيار الحادي عشر : تنوع أساليب وأدوات التقويم",
+  "منجزات أخرى خلال العام الدراسي ١٤٤٧هـ"
+];
 
-      const head = document.createElement("div");
-      head.className = "criterion-head";
+function buildCriteriaCards() {
+  const grid = document.getElementById("criteria-grid");
+  grid.innerHTML = "";
+  state.criteria = [];
 
-      const left = document.createElement("div");
-      const title = document.createElement("div");
-      title.className = "criterion-name";
-      title.textContent = name;
-      const count = document.createElement("div");
-      count.className = "criterion-count";
-      count.innerHTML = 'عدد الصور: <span id="count-' + id + '">0</span>';
+  criteriaNames.forEach((name, idx) => {
+    const id = idx + 1;
 
-      left.appendChild(title);
-      left.appendChild(count);
+    const card = document.createElement("div");
+    card.className = "criterion-card";
 
-      head.appendChild(left);
-      card.appendChild(head);
+    const head = document.createElement("div");
+    head.className = "criterion-head";
 
-      const uploadZone = document.createElement("div");
-      uploadZone.className = "upload-zone";
+    const left = document.createElement("div");
 
-      const txtBox = document.createElement("div");
-      const t1 = document.createElement("div");
-      t1.className = "upload-text";
-      t1.textContent = "اختر صور الشواهد لهذا المعيار";
-      const t2 = document.createElement("div");
-      t2.className = "upload-hint";
-      t2.textContent = "يمكن اختيار أكثر من صورة لكل معيار";
+    const title = document.createElement("div");
+    title.className = "criterion-name";
+    title.textContent = name;
 
-      txtBox.appendChild(t1);
-      txtBox.appendChild(t2);
+    const count = document.createElement("div");
+    count.className = "criterion-count";
+    count.innerHTML = 'عدد الصور: <span id="count-' + id + '">0</span>';
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-secondary";
-      btn.style.fontSize = "11px";
-      btn.innerHTML = '<span class="btn-icon">📁</span><span>اختيار صور</span>';
+    left.appendChild(title);
+    left.appendChild(count);
+    head.appendChild(left);
+    card.appendChild(head);
 
-      const input = document.createElement("input");
-      input.type = "file";
-      input.multiple = true;
-      input.accept = "image/*";
-      input.className = "hidden-input";
+    const uploadZone = document.createElement("div");
+    uploadZone.className = "upload-zone";
 
-      btn.addEventListener("click", () => input.click());
-      input.addEventListener("change", () => {
-        const files = Array.from(input.files || []);
-        state.criteria[id - 1].files = files;
-        document.getElementById("count-" + id).textContent = files.length;
-      });
+    const txtBox = document.createElement("div");
 
-      uploadZone.appendChild(txtBox);
-      uploadZone.appendChild(btn);
+    const t1 = document.createElement("div");
+    t1.className = "upload-text";
+    t1.textContent = "اختر صور الشواهد لهذا المعيار";
 
-      card.appendChild(uploadZone);
+    const t2 = document.createElement("div");
+    t2.className = "upload-hint";
+    t2.textContent = "يمكن اختيار أكثر من صورة لكل معيار";
 
-      const foot = document.createElement("div");
-      foot.className = "upload-hint";
-      foot.style.marginTop = "4px";
-      foot.innerHTML =
-        '--' +
-        id +
-        '-</code>';
-      card.appendChild(foot);
+    txtBox.appendChild(t1);
+    txtBox.appendChild(t2);
 
-      card.appendChild(input);
-      grid.appendChild(card);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-secondary";
+    btn.style.fontSize = "11px";
+    btn.innerHTML = '<span class="btn-icon">📁</span><span>اختيار صور</span>';
 
-      state.criteria.push({
-        id,
-        name,
-        files: []
-      });
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = "image/*";
+    input.className = "hidden-input";
+
+    btn.addEventListener("click", () => input.click());
+
+    input.addEventListener("change", () => {
+      const files = Array.from(input.files || []);
+      state.criteria[id - 1].files = files;
+      document.getElementById("count-" + id).textContent = files.length;
     });
-  }
 
-  function setStatus(msg, isError = false) {
-    const el = document.getElementById("status");
-    el.className = "status" + (isError ? " error" : "");
-    el.innerHTML = `
-      <div class="status-dot"></div>
-      <span>${msg}</span>
-    `;
-  }
+    uploadZone.appendChild(txtBox);
+    uploadZone.appendChild(btn);
+    card.appendChild(uploadZone);
 
-  function setLoading(isLoading) {
-    const btn = document.getElementById("btn-generate");
-    btn.disabled = isLoading;
-    btn.innerHTML = isLoading
-      ? '<span class="btn-icon"><span class="spinner"></span></span><span>جاري التوليد...</span>'
-      : '<span class="btn-icon">🚀</span><span>توليد الصفحات و QR</span>';
-  }
+    const foot = document.createElement("div");
+    foot.className = "upload-hint";
+    foot.style.marginTop = "4px";
+    foot.innerHTML = '--' + id + '-</code>';
+    card.appendChild(foot);
 
-  function setPptxLoading(isLoading) {
-    const btn = document.getElementById("btn-export-pptx");
-    const spn = document.getElementById("pptx-spinner");
-    btn.disabled = isLoading || state.qrImages.length === 0;
-    spn.style.display = isLoading ? "inline-block" : "none";
-  }
+    card.appendChild(input);
+    grid.appendChild(card);
 
-  async function githubUpload(path, content) {
-    const res = await fetch(state.workerUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, content })
+    state.criteria.push({
+      id,
+      name,
+      files: []
     });
-    if (!res.ok) {
-      const t = await res.text();
-      console.error("Worker error:", t);
-      throw new Error("فشل الرفع إلى GitHub");
-    }
-    let data = {};
-    try { data = await res.json(); } catch {}
-    console.log("Worker response:", data);
+  });
+}
+
+function setStatus(msg, isError = false) {
+  const el = document.getElementById("status");
+  el.className = "status" + (isError ? " error" : "");
+  el.innerHTML = `
+    <div class="status-dot"></div>
+    <span>${msg}</span>
+  `;
+}
+
+function setLoading(isLoading) {
+  const btn = document.getElementById("btn-generate");
+  btn.disabled = isLoading;
+  btn.innerHTML = isLoading
+    ? '<span class="btn-icon"><span class="spinner"></span></span><span>جاري التوليد...</span>'
+    : '<span class="btn-icon">🚀</span><span>توليد الصفحات و QR</span>';
+}
+
+function setPptxLoading(isLoading) {
+  const btn = document.getElementById("btn-export-pptx");
+  const spn = document.getElementById("pptx-spinner");
+  btn.disabled = isLoading || state.qrImages.length === 0;
+  spn.style.display = isLoading ? "inline-block" : "none";
+}
+
+async function githubUpload(path, content) {
+  const res = await fetch(state.workerUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, content })
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("Worker error:", t);
+    throw new Error("فشل الرفع إلى GitHub");
   }
 
-  // رفع docs/_config.yml لتفعيل كل صفحات HTML
-  async function ensureConfigYml() {
-    const content = `include:\n  - "**/*.html"\n`;
-    try {
-      await githubUpload("docs/_config.yml", content);
-    } catch (e) {
-      console.warn("تعذر رفع _config.yml (نتجاهل):", e);
-    }
+  let data = {};
+  try { data = await res.json(); } catch {}
+  console.log("Worker response:", data);
+}
+
+// رفع docs/_config.yml لتفعيل كل صفحات HTML
+async function ensureConfigYml() {
+  const content = `include:\n  - "**/*.html"\n`;
+  try {
+    await githubUpload("docs/_config.yml", content);
+  } catch (e) {
+    console.warn("تعذر رفع _config.yml (نتجاهل):", e);
   }
+}
 
-  function htmlEscape(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
+function htmlEscape(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
-  function fileToDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-  }
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
-  function buildCriterionHtml(teacherName, criterionName, imgDataUrls) {
-    const safeTeacher = htmlEscape(teacherName || "معلم بدون اسم");
-    const safeCriterion = htmlEscape(criterionName);
+function buildCriterionHtml(teacherName, criterionName, imgDataUrls) {
+  const safeTeacher = htmlEscape(teacherName || "معلم بدون اسم");
+  const safeCriterion = htmlEscape(criterionName);
 
-    const imgsHtml = imgDataUrls.map(d => `
-      <div class="img-box">
-        <img src="${d}" />
-      </div>
-    `).join("\n");
+  const imgsHtml = imgDataUrls.map(d => `
+    <div class="img-box">
+      <img src="${d}" />
+    </div>
+  `).join("\n");
 
-    return `
+  return `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -663,183 +685,185 @@ if(!user){
 </div>
 </body>
 </html>`;
+}
+
+async function generateAll() {
+  const teacherNameInput = document.getElementById("teacher-name");
+  const teacherFolderInput = document.getElementById("teacher-folder");
+
+  // اسم المستخدم القادم من تسجيل الدخول
+  const teacherFromLogin = loggedInUser;
+  if (!teacherFromLogin) {
+    alert("لم يتم العثور على جلسة تسجيل دخول صالحة، سيتم تحويلك لصفحة الدخول.");
+    window.location.href = "login.html";
+    return;
   }
 
-  async function generateAll() {
-    const teacherNameInput = document.getElementById("teacher-name");
-    const teacherFolderInput = document.getElementById("teacher-folder");
+  // اسم المعلم للعرض في الصفحات
+  let teacherName = teacherFromLogin;
 
-    // التحقق من المستخدم المسجل
-    const teacherFromLogin = loggedInUser;
-    if (!teacherFromLogin) {
-      alert("لم يتم العثور على جلسة تسجيل دخول صالحة، سيتم تحويلك لصفحة الدخول.");
-      window.location.href = "login.html";
-      return;
-    }
-
-    // اسم المعلم للعرض في الصفحات
-    let teacherName = teacherFromLogin;
-
-    // تثبيت الحقول في الواجهة (عرض فقط)
-    if (teacherNameInput) {
-      teacherNameInput.value = teacherName;
-      teacherNameInput.disabled = true;
-    }
-
-    // المجلد الرئيسي ثابت TEACHER-SA
-    let teacherFolder = "TEACHER-SA";
-    if (teacherFolderInput) {
-      teacherFolderInput.value = teacherFolder;
-      teacherFolderInput.disabled = true;
-    }
-
-    // تنظيف الاسم لاستخدامه كمجلد فرعي داخل TEACHER-SA
-    let safeTeacherName = teacherName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s_-]/g, "").trim();
-    safeTeacherName = safeTeacherName.replace(/\s+/g, "-"); // استبدال المسافات بشرطة
-
-    // الوجهة النهائية داخل docs
-    const fullFolder = `docs/${teacherFolder}/${safeTeacherName}`;
-
-    const selectedCriteria = state.criteria.filter(c => c.files.length > 0);
-    if (selectedCriteria.length === 0) {
-      alert("⚠ لم يتم اختيار أي صور لأي معيار.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setStatus("جاري إنشاء الصفحات ورفعها إلى GitHub ...");
-
-      await ensureConfigYml();
-
-      const qrItems = [];
-
-      // لكل معيار
-      for (const criterion of selectedCriteria) {
-        setStatus(`معالجة ${criterion.name} (${criterion.files.length} صورة)...`);
-
-        const imgDataUrls = [];
-        for (const file of criterion.files) {
-          const d = await fileToDataURL(file);
-          imgDataUrls.push(d);
-        }
-
-        const html = buildCriterionHtml(teacherName, criterion.name, imgDataUrls);
-
-        // مسار الرفع الفعلي داخل docs/TEACHER-SA/<teacher>/criterion-X.html
-        const uploadPath = `${fullFolder}/criterion-${criterion.id}.html`;
-        await githubUpload(uploadPath, html);
-
-        // رابط عام بدون docs
-        const publicURL =
-          `${state.baseUrl}/${teacherFolder}/${safeTeacherName}/criterion-${criterion.id}.html`;
-
-        qrItems.push({
-          id: criterion.id,
-          name: criterion.name,
-          url: publicURL
-        });
-      }
-
-      setStatus("جاري توليد رموز QR ...");
-      const qrImages = [];
-
-      for (const item of qrItems) {
-        const dataUrl = await QRCode.toDataURL(item.url, {
-          width: 512,
-          margin: 1
-        });
-        qrImages.push(dataUrl);
-      }
-
-      state.qrItems = qrItems;
-      state.qrImages = qrImages;
-
-      renderQrList();
-
-      setStatus("تم إنشاء الصفحات والروابط و QR بنجاح ✅");
-
-      document.getElementById("btn-export-pptx").disabled = false;
-      document.getElementById("qr-empty").style.display = "none";
-
-    } catch (err) {
-      console.error(err);
-      setStatus("حدث خطأ أثناء المعالجة: " + err.message, true);
-      alert("خطأ: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+  // تثبيت الحقول في الواجهة (عرض فقط)
+  if (teacherNameInput) {
+    teacherNameInput.value = teacherName;
+    teacherNameInput.disabled = true;
   }
 
-  function renderQrList() {
-    const list = document.getElementById("qr-list");
-    list.innerHTML = "";
-    if (!state.qrItems || state.qrItems.length === 0) {
-      document.getElementById("qr-empty").style.display = "block";
-      return;
+  // المجلد الرئيسي ثابت TEACHER-SA
+  let teacherFolder = "TEACHER-SA";
+  if (teacherFolderInput) {
+    teacherFolderInput.value = teacherFolder;
+    teacherFolderInput.disabled = true;
+  }
+
+  // تنظيف الاسم لاستخدامه كمجلد فرعي داخل TEACHER-SA
+  let safeTeacherName = teacherName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s_-]/g, "").trim();
+  safeTeacherName = safeTeacherName.replace(/\s+/g, "-"); // استبدال المسافات بشرطة
+
+  // الوجهة النهائية داخل docs
+  const fullFolder = `docs/${teacherFolder}/${safeTeacherName}`;
+
+  const selectedCriteria = state.criteria.filter(c => c.files.length > 0);
+  if (selectedCriteria.length === 0) {
+    alert("⚠ لم يتم اختيار أي صور لأي معيار.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setStatus("جاري إنشاء الصفحات ورفعها إلى GitHub ...");
+
+    await ensureConfigYml();
+
+    const qrItems = [];
+
+    // لكل معيار
+    for (const criterion of selectedCriteria) {
+      setStatus(`معالجة ${criterion.name} (${criterion.files.length} صورة)...`);
+
+      const imgDataUrls = [];
+      for (const file of criterion.files) {
+        const d = await fileToDataURL(file);
+        imgDataUrls.push(d);
+      }
+
+      const html = buildCriterionHtml(teacherName, criterion.name, imgDataUrls);
+
+      // مسار الرفع الفعلي داخل docs/TEACHER-SA/<teacher>/criterion-X.html
+      const uploadPath = `${fullFolder}/criterion-${criterion.id}.html`;
+      await githubUpload(uploadPath, html);
+
+      // رابط عام بدون docs
+      const publicURL =
+        `${state.baseUrl}/${teacherFolder}/${safeTeacherName}/criterion-${criterion.id}.html`;
+
+      qrItems.push({
+        id: criterion.id,
+        name: criterion.name,
+        url: publicURL
+      });
     }
+
+    setStatus("جاري توليد رموز QR ...");
+
+    const qrImages = [];
+    for (const item of qrItems) {
+      const dataUrl = await QRCode.toDataURL(item.url, {
+        width: 512,
+        margin: 1
+      });
+      qrImages.push(dataUrl);
+    }
+
+    state.qrItems = qrItems;
+    state.qrImages = qrImages;
+
+    renderQrList();
+    setStatus("تم إنشاء الصفحات والروابط و QR بنجاح ✅");
+
+    document.getElementById("btn-export-pptx").disabled = false;
     document.getElementById("qr-empty").style.display = "none";
 
-    state.qrItems.forEach((item, idx) => {
-      const card = document.createElement("div");
-      card.className = "qr-card";
-
-      const info = document.createElement("div");
-      info.className = "qr-info";
-
-      const title = document.createElement("div");
-      title.style.fontWeight = "600";
-      title.textContent = item.name;
-
-      const url = document.createElement("div");
-      url.className = "qr-url";
-      url.textContent = item.url;
-
-      const actions = document.createElement("div");
-      actions.className = "qr-actions";
-
-      const copyBtn = document.createElement("button");
-      copyBtn.className = "btn-xs";
-      copyBtn.textContent = "نسخ الرابط";
-      copyBtn.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(item.url);
-          alert("تم نسخ الرابط.");
-        } catch {
-          alert("تعذر نسخ الرابط تلقائياً. انسخه يدوياً.");
-        }
-      });
-
-      const openBtn = document.createElement("button");
-      openBtn.className = "btn-xs";
-      openBtn.textContent = "فتح الرابط";
-      openBtn.addEventListener("click", () => {
-        window.open(item.url, "_blank");
-      });
-
-      actions.appendChild(copyBtn);
-      actions.appendChild(openBtn);
-
-      info.appendChild(title);
-      info.appendChild(url);
-      info.appendChild(actions);
-
-      const qrBox = document.createElement("div");
-      qrBox.className = "qr-img-box";
-      const img = document.createElement("img");
-      img.src = state.qrImages[idx];
-      qrBox.appendChild(img);
-
-      card.appendChild(info);
-      card.appendChild(qrBox);
-      list.appendChild(card);
-    });
+  } catch (err) {
+    console.error(err);
+    setStatus("حدث خطأ أثناء المعالجة: " + err.message, true);
+    alert("خطأ: " + err.message);
+  } finally {
+    setLoading(false);
   }
-// استبدال placeholder في جميع شرائح البوربوينت
+}
+
+function renderQrList() {
+  const list = document.getElementById("qr-list");
+  list.innerHTML = "";
+
+  if (!state.qrItems || state.qrItems.length === 0) {
+    document.getElementById("qr-empty").style.display = "block";
+    return;
+  }
+
+  document.getElementById("qr-empty").style.display = "none";
+
+  state.qrItems.forEach((item, idx) => {
+    const card = document.createElement("div");
+    card.className = "qr-card";
+
+    const info = document.createElement("div");
+    info.className = "qr-info";
+
+    const title = document.createElement("div");
+    title.style.fontWeight = "600";
+    title.textContent = item.name;
+
+    const url = document.createElement("div");
+    url.className = "qr-url";
+    url.textContent = item.url;
+
+    const actions = document.createElement("div");
+    actions.className = "qr-actions";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "btn-xs";
+    copyBtn.textContent = "نسخ الرابط";
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(item.url);
+        alert("تم نسخ الرابط.");
+      } catch {
+        alert("تعذر نسخ الرابط تلقائياً. انسخه يدوياً.");
+      }
+    });
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "btn-xs";
+    openBtn.textContent = "فتح الرابط";
+    openBtn.addEventListener("click", () => {
+      window.open(item.url, "_blank");
+    });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(openBtn);
+
+    info.appendChild(title);
+    info.appendChild(url);
+    info.appendChild(actions);
+
+    const qrBox = document.createElement("div");
+    qrBox.className = "qr-img-box";
+
+    const img = document.createElement("img");
+    img.src = state.qrImages[idx];
+    qrBox.appendChild(img);
+
+    card.appendChild(info);
+    card.appendChild(qrBox);
+    list.appendChild(card);
+  });
+}
+
+// استبدال placeholder ∑ في جميع الشرائح
 async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
   const slideFolder = "ppt/slides/";
 
-  // نجيب كل ملفات الشرائح ppt/slides/slideX.xml
   const files = Object.keys(zip.files).filter(
     (name) => name.startsWith(slideFolder) && name.endsWith(".xml")
   );
@@ -850,7 +874,7 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
     // استبدال دقيق داخل <a:t>∑</a:t>
     xmlText = xmlText.replace(/<a:t>∑<\/a:t>/g, `<a:t>${replacement}</a:t>`);
 
-    // ولو فيه ∑ في أي مكان آخر برضه نستبدله
+    // ولو فيه ∑ في أماكن أخرى
     const re = new RegExp(placeholder, "g");
     xmlText = xmlText.replace(re, replacement);
 
@@ -858,63 +882,59 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
   }
 }
 
-  async function exportPptx() {
-    if (!state.qrImages || state.qrImages.length === 0) {
-        alert("لا يوجد رموز QR لتصديرها.");
-        return;
-    }
+async function exportPptx() {
+  if (!state.qrImages || state.qrImages.length === 0) {
+    alert("لا يوجد رموز QR لتصديرها.");
+    return;
+  }
 
-    let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
-    if (!teacherArabic || teacherArabic.trim() === "") {
-        alert("يجب إدخال الاسم قبل متابعة التصدير.");
-        return;
-    }
-    teacherArabic = teacherArabic.trim();
+  let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
+  if (!teacherArabic || teacherArabic.trim() === "") {
+    alert("يجب إدخال الاسم قبل متابعة التصدير.");
+    return;
+  }
+  teacherArabic = teacherArabic.trim();
 
-    try {
-        setPptxLoading(true);
+  try {
+    setPptxLoading(true);
 
-        const resp = await fetch("template.pptx");
-        const buf = await resp.arrayBuffer();
-        const zip = await JSZip.loadAsync(buf);
+    const resp = await fetch("template.pptx");
+    const buf = await resp.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
 
-        // 🔥 استبدال placeholder ∑ بجميع الشرائح
-        await replacePlaceholderInAllSlides(zip, "∑", teacherArabic);
+    // استبدال ∑ باسم المعلم في كل الشرائح
+    await replacePlaceholderInAllSlides(zip, "∑", teacherArabic);
 
-        const startSlide = 8;
-        const qrCount = state.qrImages.length;
+    const startSlide = 8;
+    const qrCount = state.qrImages.length;
 
-        for (let i = 0; i < qrCount; i++) {
-            const slideNum = startSlide + i;
-            const slidePath = `ppt/slides/slide${slideNum}.xml`;
-            const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
+    for (let i = 0; i < qrCount; i++) {
+      const slideNum = startSlide + i;
+      const slidePath = `ppt/slides/slide${slideNum}.xml`;
+      const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
 
-            if (!zip.file(slidePath)) continue;
+      if (!zip.file(slidePath)) continue;
 
-            const dataUrl = state.qrImages[i];
-            const base64 = dataUrl.split(",")[1];
-            const imgName = `qr_${i+1}.png`;
-            zip.file(`ppt/media/${imgName}`, base64, { base64: true });
+      const dataUrl = state.qrImages[i];
+      const base64 = dataUrl.split(",")[1];
+      const imgName = `qr_${i+1}.png`;
+      zip.file(`ppt/media/${imgName}`, base64, { base64: true });
 
-            let relsXml = zip.file(relsPath)
-                ? await zip.file(relsPath).async("string")
-                : `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+      let relsXml = zip.file(relsPath)
+        ? await zip.file(relsPath).async("string")
+        : `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
 
-            const relId = `rId_qr_${i+1}`;
+      const relId = `rId_qr_${i+1}`;
+      if (!relsXml.includes(`Id="${relId}"`)) {
+        relsXml = relsXml.replace(
+          "</Relationships>",
+          `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
+        );
+      }
+      zip.file(relsPath, relsXml);
 
-            if (!relsXml.includes(`Id="${relId}"`)) {
-                relsXml = relsXml.replace(
-                    "</Relationships>",
-                    `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
-                );
-            }
-
-            zip.file(relsPath, relsXml);
-
-            let slideXml = await zip.file(slidePath).async("string");
-
-            // QR داخل الشريحة
-            const picXml = `
+      let slideXml = await zip.file(slidePath).async("string");
+      const picXml = `
 <p:pic xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
        xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
@@ -935,58 +955,59 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
     <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
   </p:spPr>
 </p:pic>`;
-
-            slideXml = slideXml.replace("</p:spTree>", `${picXml}</p:spTree>`);
-            zip.file(slidePath, slideXml);
-        }
-
-        const blob = await zip.generateAsync({ type: "blob" });
-        saveAs(blob, `ملف-إنجاز-${teacherArabic}.pptx`);
-        alert("تم دمج اسم المعلم داخل ملف البوربوينت بنجاح ✓");
-
-    } catch (err) {
-        alert("خطأ أثناء توليد البوربوينت: " + err.message);
-    } finally {
-        setPptxLoading(false);
+      slideXml = slideXml.replace("</p:spTree>", `${picXml}</p:spTree>`);
+      zip.file(slidePath, slideXml);
     }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, `ملف-إنجاز-${teacherArabic}.pptx`);
+    alert("تم دمج اسم المعلم داخل ملف البوربوينت بنجاح ✓");
+  } catch (err) {
+    alert("خطأ أثناء توليد البوربوينت: " + err.message);
+  } finally {
+    setPptxLoading(false);
+  }
 }
 
+// تهيئة الصفحة بعد التحميل
+function initPage() {
+  const teacherNameInput = document.getElementById("teacher-name");
+  const teacherFolderInput = document.getElementById("teacher-folder");
 
-  // تهيئة الصفحة بعد التحميل
-  function initPage() {
-    const teacherNameInput = document.getElementById("teacher-name");
-    const teacherFolderInput = document.getElementById("teacher-folder");
-
-    if (teacherNameInput) {
-      teacherNameInput.value = loggedInUser || "";
-      teacherNameInput.disabled = true;
-    }
-    if (teacherFolderInput) {
-      teacherFolderInput.value = "TEACHER-SA";
-      teacherFolderInput.disabled = true;
-    }
-
-    buildCriteriaCards();
-    setPptxLoading(false);
-
-    const btnGenerate = document.getElementById("btn-generate");
-    const btnExport = document.getElementById("btn-export-pptx");
-    if (btnGenerate) btnGenerate.addEventListener("click", generateAll);
-    if (btnExport) btnExport.addEventListener("click", exportPptx);
-
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", function() {
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "login.html";
-      });
-    }
+  if (teacherNameInput) {
+    teacherNameInput.value = loggedInUser || "";
+    teacherNameInput.disabled = true;
   }
 
-  document.addEventListener("DOMContentLoaded", initPage);
+  if (teacherFolderInput) {
+    teacherFolderInput.value = "TEACHER-SA";
+    teacherFolderInput.disabled = true;
+  }
+
+  buildCriteriaCards();
+  setPptxLoading(false);
+
+  const btnGenerate = document.getElementById("btn-generate");
+  const btnExport   = document.getElementById("btn-export-pptx");
+
+  if (btnGenerate) btnGenerate.addEventListener("click", generateAll);
+  if (btnExport)   btnExport.addEventListener("click", exportPptx);
+
+  const logoutBtn = document.getElementById("btn-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      sessionStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initPage);
 </script>
+
 </body>
 </html>
+
 
 
 
