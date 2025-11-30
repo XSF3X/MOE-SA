@@ -391,6 +391,13 @@ img.teacher-logo {
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 
 <script>
+
+
+	const user = JSON.parse(sessionStorage.getItem("user"));
+if(!user){
+    window.location.href = "login.html";
+}
+	
   // التحقق من تسجيل الدخول
   const loggedInUser = localStorage.getItem("loggedInUser");
   if (!loggedInUser) {
@@ -980,6 +987,7 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
 </script>
 </body>
 </html>
+
 
 
 
