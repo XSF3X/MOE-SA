@@ -1,6 +1,10 @@
 {
   "success": true,
   "users": [
-    { "username": "admin", "password": "1234", "role": "admin" }
+    {
+      "username": "admin",
+      "password": "1234",
+      "role": "admin"
+    }
   ]
 }
