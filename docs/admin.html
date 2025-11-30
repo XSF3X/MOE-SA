@@ -103,6 +103,14 @@
 </div>
 
 <script>
+
+
+const user = JSON.parse(sessionStorage.getItem("user"));
+if(!user || user.role !== "admin"){
+    window.location.href = "login.html";
+}
+
+    
 const API = "https://moe-users.snh-saud.workers.dev/";
 
 /* تحميل المستخدمين */
@@ -194,3 +202,4 @@ loadUsers();
 
 </body>
 </html>
+
