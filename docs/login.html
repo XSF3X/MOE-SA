@@ -1,62 +1,86 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تسجيل الدخول</title>
+
 <style>
     body {
-        font-family: 'Tahoma', sans-serif;
-        background: linear-gradient(135deg, #0c746b, #0e122d);
+        margin: 0;
+        background: linear-gradient(135deg,#006e6d,#02203c);
+        font-family: "Cairo", sans-serif;
         height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0;
-        color: white;
     }
-
     .login-box {
-        background: #111a2e;
-        width: 380px;
-        padding: 35px;
+        width: 360px;
+        background: #0d1628;
+        padding: 30px;
         border-radius: 18px;
         text-align: center;
-        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
     }
-
-    img.logo {
-        width: 160px;
+    .logo {
+        width: 140px;
+        margin-bottom: 10px;
+    }
+    h2 {
+        color: #fff;
         margin-bottom: 15px;
     }
-
     input {
         width: 100%;
         padding: 12px;
-        margin-top: 12px;
-        border-radius: 8px;
+        margin: 10px 0;
+        border-radius: 10px;
         border: none;
-        outline: none;
+        background: #1e2a44;
+        color: #fff;
         font-size: 16px;
     }
-
     button {
         width: 100%;
         padding: 12px;
-        margin-top: 18px;
-        border-radius: 8px;
+        background: #04c29e;
         border: none;
-        background: #00c49a;
-        color: white;
+        border-radius: 10px;
+        margin-top: 10px;
+        color: #fff;
         font-size: 18px;
         cursor: pointer;
     }
-
-    .error {
-        margin-top: 10px;
-        color: #ff6b6b;
-        font-size: 15px;
+    #errorBox {
+        display: none;
+        background: #ff4b4b;
+        padding: 10px;
+        border-radius: 8px;
+        color: #fff;
+        margin-bottom: 10px;
+        font-size: 14px;
     }
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <img src="teacher_logo.png" class="logo">
+
+    <h2>تسجيل الدخول</h2>
+
+    <div id="errorBox"></div>
+
+    <input id="username" type="text" placeholder="اسم المستخدم">
+    <input id="password" type="password" placeholder="كلمة المرور">
+
+    <button onclick="loginUser()">دخول</button>
+</div>
+
+
 <script>
 const API = "https://moe-users.snh-saud.workers.dev/";
 
@@ -65,28 +89,26 @@ async function loginUser(){
     const password = document.getElementById("password").value.trim();
 
     if(!username || !password){
-        showError("الرجاء تعبئة كل الحقول");
+        showError("الرجاء تعبئة جميع الحقول");
         return;
     }
 
-    try{
+    try {
         const res = await fetch(API, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ action: "login", username, password })
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ action:"login", username, password })
         });
 
         const data = await res.json();
 
         if(!data.success){
-            showError("بيانات الدخول غير صحيحة.");
+            showError("بيانات الدخول غير صحيحة");
             return;
         }
 
-        // حفظ الجلسة
         sessionStorage.setItem("user", JSON.stringify(data.user));
 
-        // توجيه حسب الدور
         if(data.user.role === "admin"){
             window.location.href = "admin.html";
         } else {
@@ -94,17 +116,16 @@ async function loginUser(){
         }
 
     } catch(e){
-        showError("حدث خطأ بالاتصال");
+        showError("خطأ في الاتصال بالخادم");
     }
 }
 
 function showError(msg){
     const box = document.getElementById("errorBox");
-    box.innerText = msg;
     box.style.display = "block";
+    box.innerText = msg;
 }
 </script>
 
 </body>
 </html>
-
