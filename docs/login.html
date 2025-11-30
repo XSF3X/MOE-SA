@@ -77,7 +77,7 @@
     <input id="username" type="text" placeholder="اسم المستخدم">
     <input id="password" type="password" placeholder="كلمة المرور">
 
-    <button onclick="loginUser()">دخول</button>
+    <button id="loginBtn">دخول</button>
 </div>
 
 
@@ -85,6 +85,7 @@
 const API = "https://moe-users.snh-saud.workers.dev/";
 
 async function loginUser(){
+
     const username = document.getElementById("username").value.trim().toLowerCase();
     const password = document.getElementById("password").value.trim();
 
@@ -107,8 +108,10 @@ async function loginUser(){
             return;
         }
 
+        // حفظ بيانات المستخدم
         sessionStorage.setItem("user", JSON.stringify(data.user));
 
+        // تحويل حسب الدور
         if(data.user.role === "admin"){
             window.location.href = "admin.html";
         } else {
@@ -119,6 +122,14 @@ async function loginUser(){
         showError("خطأ في الاتصال بالخادم");
     }
 }
+
+// زر Enter = تسجيل الدخول
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginUser();
+});
+
+// زر الدخول
+document.getElementById("loginBtn").onclick = loginUser;
 
 function showError(msg){
     const box = document.getElementById("errorBox");
