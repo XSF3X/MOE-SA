@@ -57,73 +57,54 @@
         color: #ff6b6b;
         font-size: 15px;
     }
-</style>
-</head>
-
-<body>
-
-<div class="login-box">
-    <img src="teacher_logo.png" class="logo">
-
-    <h2>تسجيل الدخول</h2>
-
-    <div id="err" class="error"></div>
-
-    <input type="text" id="username" placeholder="اسم المستخدم">
-    <input type="password" id="password" placeholder="كلمة المرور">
-
-    <button onclick="login()">دخول</button>
-</div>
-
 <script>
 const API = "https://moe-users.snh-saud.workers.dev/";
 
-async function login() {
-    const u = document.getElementById("username").value.trim().toLowerCase();
-    const p = document.getElementById("password").value.trim();
-    const err = document.getElementById("err");
+async function loginUser(){
+    const username = document.getElementById("username").value.trim().toLowerCase();
+    const password = document.getElementById("password").value.trim();
 
-    err.textContent = "";
-
-    if (!u || !p) {
-        err.textContent = "يرجى إدخال جميع البيانات.";
+    if(!username || !password){
+        showError("الرجاء تعبئة كل الحقول");
         return;
     }
 
-    try {
-        const res = await fetch(API + "?get=1");
+    try{
+        const res = await fetch(API, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ action: "login", username, password })
+        });
+
         const data = await res.json();
 
-        if (!data.success) {
-            err.textContent = "خطأ في الاتصال بالخادم.";
-            return;
-        }
-
-        const user = data.users.find(x =>
-            x.username.toLowerCase() === u &&
-            x.password === p
-        );
-
-        if (!user) {
-            err.textContent = "بيانات الدخول غير صحيحة.";
+        if(!data.success){
+            showError("بيانات الدخول غير صحيحة.");
             return;
         }
 
         // حفظ الجلسة
-        localStorage.setItem("moeUser", JSON.stringify(user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
 
         // توجيه حسب الدور
-        if (user.role === "admin") {
+        if(data.user.role === "admin"){
             window.location.href = "admin.html";
         } else {
             window.location.href = "index.html";
         }
 
-    } catch (e) {
-        err.textContent = "حدث خطأ أثناء الاتصال.";
+    } catch(e){
+        showError("حدث خطأ بالاتصال");
     }
+}
+
+function showError(msg){
+    const box = document.getElementById("errorBox");
+    box.innerText = msg;
+    box.style.display = "block";
 }
 </script>
 
 </body>
 </html>
+
