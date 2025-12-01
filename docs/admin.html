@@ -140,10 +140,11 @@
 const API = "https://moe-users.snh-saud.workers.dev/";
 
 /* حماية الصفحة */
-const user = JSON.parse(sessionStorage.getItem("user") || "null");
+const user = JSON.parse(sessionStorage.getItem("loggedInUser") || "null");
 if (!user || user.role !== "admin") {
     window.location.href = "login.html";
 }
+
 
 /* زر الصفحة الرئيسية */
 function goHome() {
@@ -253,3 +254,4 @@ loadUsers();
 
 </body>
 </html>
+
