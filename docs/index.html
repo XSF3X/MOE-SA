@@ -339,10 +339,6 @@ img.teacher-logo {
      
     </div>
     <button id="btn-logout" class="btn btn-logout">تسجيل الخروج</button>
-	  <button id="btn-admin" class="btn btn-secondary" style="display:none;">
-  لوحة الإدارة
-</button>
-
   </header>
 
   <div class="layout">
@@ -1010,33 +1006,8 @@ function initPage() {
   }
 }
 
-// زر الأدمن يظهر فقط إذا كان المستخدم Admin
-const adminBtn = document.getElementById("btn-admin");
-if (adminBtn) {
-    if (loggedInUser && loggedInUser.toLowerCase() === "admin") {
-        adminBtn.style.display = "inline-flex";
-        adminBtn.addEventListener("click", () => {
-            window.location.href = "admin.html";
-        });
-    }
-}
-
-	
 document.addEventListener("DOMContentLoaded", initPage);
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
