@@ -11,6 +11,12 @@
       "password": "Saudi151",
       "role": "admin",
       "loginCount": 13
+    },
+    {
+      "username": "test",
+      "password": "1",
+      "role": "teacher",
+      "loginCount": 0
     }
   ]
 }
