@@ -314,6 +314,23 @@ img.teacher-logo {
   </style>
 </head>
 <body>
+
+<button id="adminPanelBtn" style="
+    display:none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background:#04c29e;
+    color:#fff;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+    z-index:9999;
+">لوحة التحكم</button>
+
+	
 <div class="app">
   <header>
     <div class="title-box">
@@ -683,6 +700,22 @@ function buildCriterionHtml(teacherName, criterionName, imgDataUrls) {
     ${imgsHtml}
   </div>
 </div>
+
+<script>
+// فحص الجلسة
+const user = JSON.parse(sessionStorage.getItem("loggedInUser") || "null");
+
+// إذا المستخدم Admin → أظهر زر لوحة التحكم
+if(user && user.role === "admin"){
+    document.getElementById("adminPanelBtn").style.display = "block";
+}
+
+// عند الضغط → الانتقال لصفحة admin
+document.getElementById("adminPanelBtn").onclick = () => {
+    window.location.href = "admin.html";
+};
+</script>
+
 </body>
 </html>`;
 }
@@ -1007,6 +1040,7 @@ document.addEventListener("DOMContentLoaded", initPage);
 
 </body>
 </html>
+
 
 
 
