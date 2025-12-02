@@ -875,23 +875,16 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
   for (const filePath of files) {
     let xmlText = await zip.file(filePath).async("string");
 
-    // استبدال النص داخل <a:t>
-    xmlText = xmlText.replace(
-      new RegExp(`<a:t>${placeholder}<\\/a:t>`, "g"),
-      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
-    );
+    // استبدال دقيق داخل <a:t>∑</a:t>
+    xmlText = xmlText.replace(/<a:t>∑<\/a:t>/g, `<a:t>${replacement}</a:t>`);
 
-    // استبدال أي ظهور للرمز خارج a:t
-    xmlText = xmlText.replace(
-      new RegExp(placeholder, "g"),
-      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
-    );
+    // ولو فيه ∑ في أماكن أخرى
+    const re = new RegExp(placeholder, "g");
+    xmlText = xmlText.replace(re, replacement);
 
     zip.file(filePath, xmlText);
   }
 }
-
-
 
 async function exportPptx() {
   if (!state.qrImages || state.qrImages.length === 0) {
@@ -899,29 +892,12 @@ async function exportPptx() {
     return;
   }
 
-  // --- اسم المعلم ( ∑ ) ---
   let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
   if (!teacherArabic || teacherArabic.trim() === "") {
     alert("يجب إدخال الاسم قبل متابعة التصدير.");
     return;
   }
   teacherArabic = teacherArabic.trim();
-
-  // --- اسم مدير المدرسة ( ∏ ) ---
-  let principalName = prompt("الرجاء كتابة إسم مدير المدرسة:");
-  if (!principalName || principalName.trim() === "") {
-    alert("يجب إدخال اسم مدير المدرسة.");
-    return;
-  }
-  principalName = principalName.trim();
-
-  // --- اسم المدرسة ( ∆ ) ---
-  let schoolName = prompt("الرجاء كتابة إسم المدرسة:");
-  if (!schoolName || schoolName.trim() === "") {
-    alert("يجب إدخال اسم المدرسة.");
-    return;
-  }
-  schoolName = schoolName.trim();
 
   try {
     setPptxLoading(true);
@@ -930,10 +906,8 @@ async function exportPptx() {
     const buf = await resp.arrayBuffer();
     const zip = await JSZip.loadAsync(buf);
 
-    // استبدال الـ placeholder في كل الشرائح
+    // استبدال ∑ باسم المعلم في كل الشرائح
     await replacePlaceholderInAllSlides(zip, "∑", teacherArabic);
-    await replacePlaceholderInAllSlides(zip, "∏", principalName);
-    await replacePlaceholderInAllSlides(zip, "∆", schoolName);
 
     const startSlide = 8;
     const qrCount = state.qrImages.length;
@@ -991,15 +965,13 @@ async function exportPptx() {
 
     const blob = await zip.generateAsync({ type: "blob" });
     saveAs(blob, `ملف-إنجاز-${teacherArabic}.pptx`);
-    alert("تم دمج البيانات داخل ملف البوربوينت بنجاح ✓");
-
+    alert("تم دمج اسم المعلم داخل ملف البوربوينت بنجاح ✓");
   } catch (err) {
     alert("خطأ أثناء توليد البوربوينت: " + err.message);
   } finally {
     setPptxLoading(false);
   }
 }
-
 
 // تهيئة الصفحة بعد التحميل
 function initPage() {
@@ -1039,7 +1011,3 @@ document.addEventListener("DOMContentLoaded", initPage);
 
 </body>
 </html>
-
-
-
-
