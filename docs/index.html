@@ -867,22 +867,30 @@ function renderQrList() {
 // استبدال placeholder ∑ في جميع الشرائح
 async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
   const slideFolder = "ppt/slides/";
-  function xmlEscape(s) {
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-  const escaped = xmlEscape(replacement);
-  const files = Object.keys(zip.files).filter(name => name.startsWith(slideFolder) && name.endsWith(".xml"));
+
+  const files = Object.keys(zip.files).filter(
+    (name) => name.startsWith(slideFolder) && name.endsWith(".xml")
+  );
+
   for (const filePath of files) {
-    let xml = await zip.file(filePath).async("string");
-    xml = xml.replace(new RegExp(`<a:t[^>]*>${placeholder}</a:t>`, "g"), `<a:t>${escaped}</a:t>`);
-    xml = xml.replace(
-      new RegExp(`<a:r>([\\s\\S]*?)<a:t[^>]*>${placeholder}</a:t>([\\s\\S]*?)</a:r>`, "g"),
-      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${escaped}</a:t></a:r>`
+    let xmlText = await zip.file(filePath).async("string");
+
+    // استبدال placeholder داخل <a:t> فقط بدون تخريب XML
+    xmlText = xmlText.replace(
+      new RegExp(`<a:t[^>]*>${placeholder}<\\/a:t>`, "g"),
+      () => {
+        return `
+<a:r>
+  <a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/>
+  <a:t>${replacement}</a:t>
+</a:r>`;
+      }
     );
-    zip.file(filePath, xml);
+
+    zip.file(filePath, xmlText);
   }
 }
-}
+
 
 async function exportPptx() {
   if (!state.qrImages || state.qrImages.length === 0) {
