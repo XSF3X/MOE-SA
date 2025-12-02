@@ -875,16 +875,22 @@ async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
   for (const filePath of files) {
     let xmlText = await zip.file(filePath).async("string");
 
-    // استبدال دقيق داخل <a:t>∑</a:t>
-    xmlText = xmlText.replace(/<a:t>∑<\/a:t>/g, `<a:t>${replacement}</a:t>`);
+    // استبدال النص داخل <a:t>
+    xmlText = xmlText.replace(
+      new RegExp(`<a:t>${placeholder}<\\/a:t>`, "g"),
+      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
+    );
 
-    // ولو فيه ∑ في أماكن أخرى
-    const re = new RegExp(placeholder, "g");
-    xmlText = xmlText.replace(re, replacement);
+    // استبدال أي ظهور للرمز خارج a:t
+    xmlText = xmlText.replace(
+      new RegExp(placeholder, "g"),
+      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
+    );
 
     zip.file(filePath, xmlText);
   }
 }
+
 
 async function exportPptx() {
   if (!state.qrImages || state.qrImages.length === 0) {
@@ -1032,4 +1038,5 @@ document.addEventListener("DOMContentLoaded", initPage);
 
 </body>
 </html>
+
 
