@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>ملف إنجاز المعلم - توليد صفحات و QR و PowerPoint</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top, #0f172a 0%, #020617 55%, #000 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
+      direction: rtl;
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    header {
+      border-radius: 16px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #020617, #020617);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+    header .title-box {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+.logo img.teacher-logo {
+    width: 120px;   /* الحجم المناسب للّوجو */
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 20px; /* لمسة حلوة */
+    padding: 5px;
+}
+
+img.teacher-logo {
+    max-width: 120px !important;
+}
+
+    }
+    .title-main {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .title-sub {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .teacher-box {
+      min-width: 260px;
+      border-radius: 12px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.5);
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .teacher-box label {
+      display: block;
+      margin-bottom: 4px;
+      color: #9ca3af;
+    }
+    .teacher-box input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #020617;
+      color: #e5e7eb;
+      padding: 5px 7px;
+      font-size: 12px;
+      margin-bottom: 6px;
+      direction: ltr;
+      text-align: left;
+    }
+    .teacher-box small {
+      display: block;
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .btn {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 7px 14px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(to left, #22c55e, #16a34a);
+      border-color: rgba(34,197,94,0.95);
+      color: #022c22;
+      box-shadow: 0 12px 30px rgba(22,163,74,0.8);
+      font-weight: 600;
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+    .btn-secondary {
+      background: #020617;
+      border-color: rgba(148,163,184,0.6);
+      color: #e5e7eb;
+    }
+    .btn-ut {
+      background: #7f1d1d;
+      border-color: rgba(248,113,113,0.8);
+      color: #fee2e2;
+    }
+    .btn-ut:hover {
+      background: #b91c1c;
+    }
+
+    .btn-icon {
+      font-size: 14px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+      gap: 16px;
+    }
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .panel {
+      border-radius: 16px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: rgba(15,23,42,0.95);
+      box-shadow: 0 16px 40px rgba(15,23,42,0.9);
+      padding: 12px 12px 14px;
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .panel-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 900px) {
+      .criteria-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 640px) {
+      .criteria-grid { grid-template-columns: minmax(0,1fr); }
+    }
+    .criterion-card {
+      border-radius: 12px;
+      background: #020617;
+      border: 1px solid rgba(148,163,184,0.4);
+      padding: 8px 9px 10px;
+      font-size: 12px;
+    }
+    .criterion-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .criterion-name {
+      font-weight: 600;
+    }
+    .criterion-count {
+      color: #9ca3af;
+      font-size: 11px;
+    }
+    .criterion-count span {
+      color: #f97316;
+      font-weight: 600;
+    }
+    .upload-zone {
+      border-radius: 9px;
+      border: 1px dashed rgba(148,163,184,0.8);
+      background: rgba(15,23,42,0.9);
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .upload-text {
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+    .upload-hint {
+      font-size: 10px;
+      color: #9ca3af;
+    }
+    .hidden-input {
+      display: none;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.3);
+    }
+    .status.error .status-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.3);
+    }
+    .qr-list {
+      display: grid;
+      grid-template-columns: minmax(0,1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .qr-card {
+      border-radius: 10px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: #020617;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+    }
+    .qr-info {
+      flex: 1;
+    }
+    .qr-url {
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+      color: #9ca3af;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+    .qr-img-box {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #0b1120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .qr-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .qr-actions {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .btn-xs {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: #020617;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+    .btn-xs:hover {
+      border-color: #38bdf8;
+    }
+    .footer-note {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(148,163,184,0.25);
+      border-top-color: #22c55e;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+	
+<div class="app">
+  <header>
+    <div class="title-box">
+<div class="logo">
+    <img src="teacher_logo.png" class="teacher-logo" alt="شعار الموقع" />
+</div>
+
+
+      <div>
+        <div class="title-main">ملف إنجاز المعلم الذكي</div>
+        <div class="title-sub">
+          رفع الشواهد في صفحات مستقلة مع QR لكل صفحة مع تضمينها في ملف باوربوينت 
+        </div>
+      </div>
+    </div>
+    <div class="teacher-box">
+      <label>اسم المعلم (من تسجيل الدخول):</label>
+      <input id="teacher-name" type="text" placeholder="اسم المستخدم" />
+      <label> ملف المعلمين:</label>
+      <input id="teacher-folder" type="text" placeholder="TEACHER-SA" value="TEACHER-SA" />
+     
+    </div>
+    <button id="btn-logout" class="btn btn-logout">تسجيل الخروج</button>
+  </header>
+
+  <div class="layout">
+    <!-- يسار: المعايير -->
+    <section class="panel">
+      <div class="panel-title">المعايير (12 معيار)</div>
+      <div class="panel-sub">
+        اختر صور الشواهد لكل معيار. كل معيار سيحصل على صفحة مستقلة .
+      </div>
+
+      <div id="criteria-grid" class="criteria-grid"></div>
+
+      <div style="margin-top: 10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button id="btn-generate" class="btn btn-primary">
+          <span class="btn-icon">🚀</span>
+          <span>توليد الصفحات و QR</span>
+        </button>
+        <div id="status" class="status">
+          <div class="status-dot"></div>
+          <span>جاهز للعمل. اختر صورًا ثم اضغط توليد.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- يمين: QR + PPTX -->
+    <section class="panel">
+      <div class="panel-title">/ إنتظر دقيقة لتفعيل رابط الباركود QR</div>
+      <div class="panel-sub">
+        بعد التوليد، ستظهر هنا روابط كل معيار مع QR خاص به، ويمكن تنزيل ملف PowerPoint النهائي.
+      </div>
+
+      <div id="qr-list" class="qr-list"></div>
+      <div id="qr-empty" style="font-size:11px;color:#6b7280;">لم يتم إنشاء أي صفحات بعد.</div>
+
+      <hr style="margin:10px 0;border-color:rgba(55,65,81,0.7);" />
+
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button id="btn-export-pptx" class="btn btn-secondary" disabled>
+          <span class="btn-icon">📊</span>
+		<span>تنزيل ملف PowerPoint </span>        </button>
+        <div id="pptx-spinner" class="spinner" style="display:none;"></div>
+      </div>
+      <div class="footer-note">
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- مكتبات خارجية -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+
+
+<script>
+// =======================
+// تأمين الصفحة + قراءة المستخدم من تسجيل الدخول
+// =======================
+
+// نقرأ المستخدم المخزّن في جلسة المتصفح من login.html
+const loggedInUserRaw = sessionStorage.getItem("loggedInUser");
+
+// لو ما فيه جلسة → نرجع لصفحة الدخول
+if (!loggedInUserRaw) {
+  window.location.href = "login.html";
+}
+
+// نفك JSON بأمان
+let user = null;
+try {
+  user = JSON.parse(loggedInUserRaw);
+} catch (e) {
+  user = null;
+}
+
+// لو JSON خربان أو ما فيه username → نرجع للدخول
+if (!user || !user.username) {
+  sessionStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+}
+
+// هذا اللي بنستخدمه كاسم مستخدم في الصفحة
+const loggedInUser = user.username;
+
+// =======================
+// الحالة العامة
+// =======================
+
+const state = {
+  criteria: [],
+  qrItems: [],   // {id, name, url}
+  qrImages: [],  // dataURL لكل QR
+  workerUrl: "https://moe-uploader.snh-saud.workers.dev/",
+  baseUrl: "https://xsf3x.github.io/MOE-SA"
+};
+
+const criteriaNames = [
+  "المعيار  الأول : أداء الواجبات الوظيفية",
+  "المعيار الثاني : التفاعل مع المجتمع المهني",
+  "المعيار  الثالث : التفاعل مع أولياء الأمور",
+  "المعيار الرابع : التنويع في إستراتيجيات التدريس",
+  "المعيار الخامس  : تحسين نتائج المتعلمين",
+  "المعيار السادس : إعداد وتنفيذ خطة التعلم",
+  "المعيار السابع : توظيف تقنيات ووسائل التعلم المناسبة",
+  "المعيار الثامن : تهيئة البيئة التعليمية",
+  "المعيار التاسع : الإدارة الصفية",
+  "المعيار العاشر : تحليل نتائج المتعلمين وتشخيص مستوياتهم",
+  "المعيار الحادي عشر : تنوع أساليب وأدوات التقويم",
+  "منجزات أخرى خلال العام الدراسي ١٤٤٧هـ"
+];
+
+function buildCriteriaCards() {
+  const grid = document.getElementById("criteria-grid");
+  grid.innerHTML = "";
+  state.criteria = [];
+
+  criteriaNames.forEach((name, idx) => {
+    const id = idx + 1;
+
+    const card = document.createElement("div");
+    card.className = "criterion-card";
+
+    const head = document.createElement("div");
+    head.className = "criterion-head";
+
+    const left = document.createElement("div");
+
+    const title = document.createElement("div");
+    title.className = "criterion-name";
+    title.textContent = name;
+
+    const count = document.createElement("div");
+    count.className = "criterion-count";
+    count.innerHTML = 'عدد الصور: <span id="count-' + id + '">0</span>';
+
+    left.appendChild(title);
+    left.appendChild(count);
+    head.appendChild(left);
+    card.appendChild(head);
+
+    const uploadZone = document.createElement("div");
+    uploadZone.className = "upload-zone";
+
+    const txtBox = document.createElement("div");
+
+    const t1 = document.createElement("div");
+    t1.className = "upload-text";
+    t1.textContent = "اختر صور الشواهد لهذا المعيار";
+
+    const t2 = document.createElement("div");
+    t2.className = "upload-hint";
+    t2.textContent = "يمكن اختيار أكثر من صورة لكل معيار";
+
+    txtBox.appendChild(t1);
+    txtBox.appendChild(t2);
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-secondary";
+    btn.style.fontSize = "11px";
+    btn.innerHTML = '<span class="btn-icon">📁</span><span>اختيار صور</span>';
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = "image/*";
+    input.className = "hidden-input";
+
+    btn.addEventListener("click", () => input.click());
+
+    input.addEventListener("change", () => {
+      const files = Array.from(input.files || []);
+      state.criteria[id - 1].files = files;
+      document.getElementById("count-" + id).textContent = files.length;
+    });
+
+    uploadZone.appendChild(txtBox);
+    uploadZone.appendChild(btn);
+    card.appendChild(uploadZone);
+
+    const foot = document.createElement("div");
+    foot.className = "upload-hint";
+    foot.style.marginTop = "4px";
+    foot.innerHTML = '--' + id + '-</code>';
+    card.appendChild(foot);
+
+    card.appendChild(input);
+    grid.appendChild(card);
+
+    state.criteria.push({
+      id,
+      name,
+      files: []
+    });
+  });
+}
+
+function setStatus(msg, isError = false) {
+  const el = document.getElementById("status");
+  el.className = "status" + (isError ? " error" : "");
+  el.innerHTML = `
+    <div class="status-dot"></div>
+    <span>${msg}</span>
+  `;
+}
+
+function setLoading(isLoading) {
+  const btn = document.getElementById("btn-generate");
+  btn.disabled = isLoading;
+  btn.innerHTML = isLoading
+    ? '<span class="btn-icon"><span class="spinner"></span></span><span>جاري التوليد...</span>'
+    : '<span class="btn-icon">🚀</span><span>توليد الصفحات و QR</span>';
+}
+
+function setPptxLoading(isLoading) {
+  const btn = document.getElementById("btn-export-pptx");
+  const spn = document.getElementById("pptx-spinner");
+  btn.disabled = isLoading || state.qrImages.length === 0;
+  spn.style.display = isLoading ? "inline-block" : "none";
+}
+
+async function githubUpload(path, content) {
+  const res = await fetch(state.workerUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path, content })
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("Worker error:", t);
+    throw new Error("فشل الرفع إلى GitHub");
+  }
+
+  let data = {};
+  try { data = await res.json(); } catch {}
+  console.log("Worker response:", data);
+}
+
+// رفع docs/_config.yml لتفعيل كل صفحات HTML
+async function ensureConfigYml() {
+  const content = `include:\n  - "**/*.html"\n`;
+  try {
+    await githubUpload("docs/_config.yml", content);
+  } catch (e) {
+    console.warn("تعذر رفع _config.yml (نتجاهل):", e);
+  }
+}
+
+function htmlEscape(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function buildCriterionHtml(teacherName, criterionName, imgDataUrls) {
+  const safeTeacher = htmlEscape(teacherName || "معلم بدون اسم");
+  const safeCriterion = htmlEscape(criterionName);
+
+  const imgsHtml = imgDataUrls.map(d => `
+    <div class="img-box">
+      <img src="${d}" />
+    </div>
+  `).join("\n");
+
+  return `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<title>${safeTeacher} - ${safeCriterion}</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f9fafb;
+    color: #0f172a;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #0f172a;
+    color: #f9fafb;
+    padding: 14px 18px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .sub {
+    font-size: 12px;
+    color: #e5e7eb;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .criterion-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .teacher {
+    font-size: 13px;
+    color: #4b5563;
+    margin-bottom: 14px;
+  }
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .img-box {
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(15,23,42,0.08);
+  }
+  .img-box img {
+    display: block;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+<header>
+  ${safeCriterion}
+  <div class="sub">صفحة الشواهد ضمن ملف إنجاز المعلم</div>
+</header>
+<div class="container">
+  <div class="teacher">المعلم/ة: ${safeTeacher}</div>
+  <div class="img-grid">
+    ${imgsHtml}
+  </div>
+</div>
+
+
+</body>
+</html>`;
+}
+
+async function generateAll() {
+  const teacherNameInput = document.getElementById("teacher-name");
+  const teacherFolderInput = document.getElementById("teacher-folder");
+
+  // اسم المستخدم القادم من تسجيل الدخول
+  const teacherFromLogin = loggedInUser;
+  if (!teacherFromLogin) {
+    alert("لم يتم العثور على جلسة تسجيل دخول صالحة، سيتم تحويلك لصفحة الدخول.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  // اسم المعلم للعرض في الصفحات
+  let teacherName = teacherFromLogin;
+
+  // تثبيت الحقول في الواجهة (عرض فقط)
+  if (teacherNameInput) {
+    teacherNameInput.value = teacherName;
+    teacherNameInput.disabled = true;
+  }
+
+  // المجلد الرئيسي ثابت TEACHER-SA
+  let teacherFolder = "TEACHER-SA";
+  if (teacherFolderInput) {
+    teacherFolderInput.value = teacherFolder;
+    teacherFolderInput.disabled = true;
+  }
+
+  // تنظيف الاسم لاستخدامه كمجلد فرعي داخل TEACHER-SA
+  let safeTeacherName = teacherName.replace(/[^a-zA-Z0-9\u0600-\u06FF\s_-]/g, "").trim();
+  safeTeacherName = safeTeacherName.replace(/\s+/g, "-"); // استبدال المسافات بشرطة
+
+  // الوجهة النهائية داخل docs
+  const fullFolder = `docs/${teacherFolder}/${safeTeacherName}`;
+
+  const selectedCriteria = state.criteria.filter(c => c.files.length > 0);
+  if (selectedCriteria.length === 0) {
+    alert("⚠ لم يتم اختيار أي صور لأي معيار.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setStatus("جاري إنشاء الصفحات ورفعها إلى GitHub ...");
+
+    await ensureConfigYml();
+
+    const qrItems = [];
+
+    // لكل معيار
+    for (const criterion of selectedCriteria) {
+      setStatus(`معالجة ${criterion.name} (${criterion.files.length} صورة)...`);
+
+      const imgDataUrls = [];
+      for (const file of criterion.files) {
+        const d = await fileToDataURL(file);
+        imgDataUrls.push(d);
+      }
+
+      const html = buildCriterionHtml(teacherName, criterion.name, imgDataUrls);
+
+      // مسار الرفع الفعلي داخل docs/TEACHER-SA/<teacher>/criterion-X.html
+      const uploadPath = `${fullFolder}/criterion-${criterion.id}.html`;
+      await githubUpload(uploadPath, html);
+
+      // رابط عام بدون docs
+      const publicURL =
+        `${state.baseUrl}/${teacherFolder}/${safeTeacherName}/criterion-${criterion.id}.html`;
+
+      qrItems.push({
+        id: criterion.id,
+        name: criterion.name,
+        url: publicURL
+      });
+    }
+
+    setStatus("جاري توليد رموز QR ...");
+
+    const qrImages = [];
+    for (const item of qrItems) {
+      const dataUrl = await QRCode.toDataURL(item.url, {
+        width: 512,
+        margin: 1
+      });
+      qrImages.push(dataUrl);
+    }
+
+    state.qrItems = qrItems;
+    state.qrImages = qrImages;
+
+    renderQrList();
+    setStatus("تم إنشاء الصفحات والروابط و QR بنجاح ✅");
+
+    document.getElementById("btn-export-pptx").disabled = false;
+    document.getElementById("qr-empty").style.display = "none";
+
+  } catch (err) {
+    console.error(err);
+    setStatus("حدث خطأ أثناء المعالجة: " + err.message, true);
+    alert("خطأ: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderQrList() {
+  const list = document.getElementById("qr-list");
+  list.innerHTML = "";
+
+  if (!state.qrItems || state.qrItems.length === 0) {
+    document.getElementById("qr-empty").style.display = "block";
+    return;
+  }
+
+  document.getElementById("qr-empty").style.display = "none";
+
+  state.qrItems.forEach((item, idx) => {
+    const card = document.createElement("div");
+    card.className = "qr-card";
+
+    const info = document.createElement("div");
+    info.className = "qr-info";
+
+    const title = document.createElement("div");
+    title.style.fontWeight = "600";
+    title.textContent = item.name;
+
+    const url = document.createElement("div");
+    url.className = "qr-url";
+    url.textContent = item.url;
+
+    const actions = document.createElement("div");
+    actions.className = "qr-actions";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "btn-xs";
+    copyBtn.textContent = "نسخ الرابط";
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(item.url);
+        alert("تم نسخ الرابط.");
+      } catch {
+        alert("تعذر نسخ الرابط تلقائياً. انسخه يدوياً.");
+      }
+    });
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "btn-xs";
+    openBtn.textContent = "فتح الرابط";
+    openBtn.addEventListener("click", () => {
+      window.open(item.url, "_blank");
+    });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(openBtn);
+
+    info.appendChild(title);
+    info.appendChild(url);
+    info.appendChild(actions);
+
+    const qrBox = document.createElement("div");
+    qrBox.className = "qr-img-box";
+
+    const img = document.createElement("img");
+    img.src = state.qrImages[idx];
+    qrBox.appendChild(img);
+
+    card.appendChild(info);
+    card.appendChild(qrBox);
+    list.appendChild(card);
+  });
+}
+
+// استبدال placeholder ∑ في جميع الشرائح
+async function replacePlaceholderInAllSlides(zip, placeholder, replacement) {
+  const slideFolder = "ppt/slides/";
+
+  const files = Object.keys(zip.files).filter(
+    (name) => name.startsWith(slideFolder) && name.endsWith(".xml")
+  );
+
+  for (const filePath of files) {
+    let xmlText = await zip.file(filePath).async("string");
+
+    // استبدال النص داخل <a:t>
+    xmlText = xmlText.replace(
+      new RegExp(`<a:t>${placeholder}<\\/a:t>`, "g"),
+      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
+    );
+
+    // استبدال أي ظهور للرمز خارج a:t
+    xmlText = xmlText.replace(
+      new RegExp(placeholder, "g"),
+      `<a:r><a:rPr lang="ar-SA" dirty="0" smtClean="0" typeface="Sakkal Majalla"/><a:t>${replacement}</a:t></a:r>`
+    );
+
+    zip.file(filePath, xmlText);
+  }
+}
+
+
+
+async function exportPptx() {
+  if (!state.qrImages || state.qrImages.length === 0) {
+    alert("لا يوجد رموز QR لتصديرها.");
+    return;
+  }
+
+  // --- اسم المعلم ( ∑ ) ---
+  let teacherArabic = prompt("الرجاء إدخال اسم المعلم بالعربي لدمجه في ملف البوربوينت:");
+  if (!teacherArabic || teacherArabic.trim() === "") {
+    alert("يجب إدخال الاسم قبل متابعة التصدير.");
+    return;
+  }
+  teacherArabic = teacherArabic.trim();
+
+  // --- اسم مدير المدرسة ( ∏ ) ---
+  let principalName = prompt("الرجاء كتابة إسم مدير المدرسة:");
+  if (!principalName || principalName.trim() === "") {
+    alert("يجب إدخال اسم مدير المدرسة.");
+    return;
+  }
+  principalName = principalName.trim();
+
+  // --- اسم المدرسة ( ∆ ) ---
+  let schoolName = prompt("الرجاء كتابة إسم المدرسة:");
+  if (!schoolName || schoolName.trim() === "") {
+    alert("يجب إدخال اسم المدرسة.");
+    return;
+  }
+  schoolName = schoolName.trim();
+
+  try {
+    setPptxLoading(true);
+
+    const resp = await fetch("template.pptx");
+    const buf = await resp.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+
+    // استبدال الـ placeholder في كل الشرائح
+    await replacePlaceholderInAllSlides(zip, "∑", teacherArabic);
+    await replacePlaceholderInAllSlides(zip, "∏", principalName);
+    await replacePlaceholderInAllSlides(zip, "∆", schoolName);
+
+    const startSlide = 8;
+    const qrCount = state.qrImages.length;
+
+    for (let i = 0; i < qrCount; i++) {
+      const slideNum = startSlide + i;
+      const slidePath = `ppt/slides/slide${slideNum}.xml`;
+      const relsPath  = `ppt/slides/_rels/slide${slideNum}.xml.rels`;
+
+      if (!zip.file(slidePath)) continue;
+
+      const dataUrl = state.qrImages[i];
+      const base64 = dataUrl.split(",")[1];
+      const imgName = `qr_${i+1}.png`;
+      zip.file(`ppt/media/${imgName}`, base64, { base64: true });
+
+      let relsXml = zip.file(relsPath)
+        ? await zip.file(relsPath).async("string")
+        : `<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+
+      const relId = `rId_qr_${i+1}`;
+      if (!relsXml.includes(`Id="${relId}"`)) {
+        relsXml = relsXml.replace(
+          "</Relationships>",
+          `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/${imgName}"/></Relationships>`
+        );
+      }
+      zip.file(relsPath, relsXml);
+
+      let slideXml = await zip.file(slidePath).async("string");
+      const picXml = `
+<p:pic xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:nvPicPr>
+    <p:cNvPr id="200${i+1}" name="QR_${i+1}"/>
+    <p:cNvPicPr/>
+    <p:nvPr/>
+  </p:nvPicPr>
+  <p:blipFill>
+    <a:blip r:embed="${relId}"/>
+    <a:stretch><a:fillRect/></a:stretch>
+  </p:blipFill>
+  <p:spPr>
+    <a:xfrm>
+      <a:off x="6217920" y="4251840"/>
+      <a:ext cx="2421600" cy="2257680"/>
+    </a:xfrm>
+    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+  </p:spPr>
+</p:pic>`;
+      slideXml = slideXml.replace("</p:spTree>", `${picXml}</p:spTree>`);
+      zip.file(slidePath, slideXml);
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, `ملف-إنجاز-${teacherArabic}.pptx`);
+    alert("تم دمج البيانات داخل ملف البوربوينت بنجاح ✓");
+
+  } catch (err) {
+    alert("خطأ أثناء توليد البوربوينت: " + err.message);
+  } finally {
+    setPptxLoading(false);
+  }
+}
+
+
+// تهيئة الصفحة بعد التحميل
+function initPage() {
+  const teacherNameInput = document.getElementById("teacher-name");
+  const teacherFolderInput = document.getElementById("teacher-folder");
+
+  if (teacherNameInput) {
+    teacherNameInput.value = loggedInUser || "";
+    teacherNameInput.disabled = true;
+  }
+
+  if (teacherFolderInput) {
+    teacherFolderInput.value = "TEACHER-SA";
+    teacherFolderInput.disabled = true;
+  }
+
+  buildCriteriaCards();
+  setPptxLoading(false);
+
+  const btnGenerate = document.getElementById("btn-generate");
+  const btnExport   = document.getElementById("btn-export-pptx");
+
+  if (btnGenerate) btnGenerate.addEventListener("click", generateAll);
+  if (btnExport)   btnExport.addEventListener("click", exportPptx);
+
+  const logoutBtn = document.getElementById("btn-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+      sessionStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initPage);
+</script>
+
+</body>
+</html>
+
+
+
+
